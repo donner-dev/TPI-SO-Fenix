@@ -1,10 +1,6 @@
-Excelente pregunta. Déjame mostrarte el orden de lectura tal como está ahora en la guía actualizada: 
+CON LOS OJOS
 
-Leer PLAN_COMPLETADO_RESUMEN_FINAL.md, líneas 1 a 50
-
-Perfecto. El orden de lectura está así:
-
-## 📖 **Orden de Lectura (Igual que al principio)**
+## 📖 **Orden de Lectura**
 
 ### **PARA TODOS JUNTOS (Reunión - 30 min)**
 1. ⭐ **INICIO_RAPIDO.md** (5 min) - Resumen ejecutivo
@@ -12,7 +8,7 @@ Perfecto. El orden de lectura está así:
 3. 📋 **PLAN_COMPLETADO_RESUMEN_FINAL.md** (10 min) - Este mismo archivo
 
 ### **PERSONALIZADOS POR PERSONA (20-30 min cada uno)**
-
+s
 **Persona A (Agregar `t_arribo_MP`)**:
 1. PLAN_CORRECCIONES (Sección 1a - 10 min)
 2. EJEMPLOS_VISUALES (Parte de Sección 1 - 5 min)

@@ -1,11 +1,6 @@
-# 📊 RESUMEN IMPRIMIBLE: PLAN DE CORRECCIONES
-## Una página para imprimir y llevar
-
----
-
 ## LAS 3 CORRECCIONES NECESARIAS
 
-### ❌ PROBLEMA 1: TIEMPOS INCORRECTOS
+### ❌ PROBLEMA 1: TIEMPOS INCORRECTO
 **Causa**: Se usa `t_arribo` (del CSV) en lugar de `t_arribo_MP` (entrada real a MP)
 
 **Solución rápida**:

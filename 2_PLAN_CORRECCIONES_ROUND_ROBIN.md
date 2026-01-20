@@ -1,5 +1,4 @@
 # PLAN DE CORRECCIONES PARA ROUND ROBIN
-## Guía de Trabajo para Corregir los Problemas Identificados
 
 ---
 
