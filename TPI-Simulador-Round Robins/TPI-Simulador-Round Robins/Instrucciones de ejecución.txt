@@ -1,0 +1,5 @@
+-Iniciar el programa en pantalla completa, en la carpeta "Ejecutable" se encuentra el simulador.
+
+-Se tiene un archivo de prueba de "procesos.csv" del lote 2 ubicado en la misma carpeta donde está el simulador para ejecutarlo con esa carga de trabajos.
+
+-Si desea probar el simulador con el "lote 1" o el "lote 3", ingrese a la carpeta "Archivos de prueba", ingrese en la carpeta de uno de los lotes que desee, y copie y reemplace ese archivo .csv en la carpeta de "Ejecutable", ya que el simulador busca el "procesos.csv" que se encuentra en la misma carpeta que el ejecutable.
