@@ -1,24 +1,25 @@
 ###################################### IMPORTS ######################################
-
-
 import csv
 from pathlib import Path
-import sys
 from rich.console import Console
 from rich.table import Table
-
-
-sys.path.append('..')
-#import estado_global#no se esta usando, queda comentado, tira error esto cuando este modulo.py se importa en otros modulos
-
-#ESTO USA TODO LISTAS PARA LA IMPLEMENTACION. TranQuilmes.
 import msvcrt
 import time
 import sys
 import os
+sys.path.append('..')
 
 
-######################################VARIABLES GLOBALES######################################
+""" Importé las funciones de SIMULADOR.py  para tenerlo modulado como se habia discutido (vamos viendo si queda bien o no) """
+import paquetes.LisandroRojas.funcionesLisandro_prolijo as Lis
+import paquetes.AgustinVeron.Menu as MA
+import paquetes.estado_global as vGlobal
+import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as FunArchivos
+
+
+
+
+###################################### VARIABLES GLOBALES ######################################
 listaNuevos=[]
 listaSuspendidos=[]
 listaMP=[
@@ -64,7 +65,7 @@ paso1=None
 paso2=None
 
 ###################################### MENÚ ######################################
-
+""" Podemos revisar en donde van las funciones del menú, si acá o en otro archivo aparte?  mas que nada lo del render de logo- Donner """
 #Dimensiones de pantalla
 xMaxPantalla = 90
 yMaxPantalla = 34
@@ -207,6 +208,10 @@ def mostrar_menu():
     #posicion del puntero en la posicion maxima en x e y para dibujar toda la pantalla
     gotoxy(xMaxPantalla,yMaxPantalla+2)
 
+
+
+
+""" Esto no me esta andando cuando lo uso :( Para revisar con los otros  -Donner """
 #Desplazamiento y selección en el menú principal
 def selec_opcion_menu1():
     # Siempre devuelve la primera opción (0 + 1 = 1)
@@ -281,8 +286,8 @@ def selec_opcion_menu2():
        
     return pos_puntero + 1 # Devuelve 1, 2, o 3 (el número de opción)
 
-
-def carga_manual_procesos():
+""" REVISAR si no cambiamos por la otra funcion.  - Donner """
+def carga_manual_procesos(): 
     limpiar_pantalla()
     global cantProcesosRestantes
     """ carga procesos manualmente y devuelve una lista de objetos Proceso """
@@ -290,7 +295,7 @@ def carga_manual_procesos():
     valid_count = 0
     ids_usados=set() #para evitar repetidos
     print("Se aceptarán hasta 10 procesos. Ingrese los datos solicitados.")
-    while valid_count < 10: #ponganle a 3 para testing rapido
+    while valid_count < 10:
         print(f"\n---Ingrese datos del proceso {valid_count+1}: ---")
         id_proceso = input("ID Proceso: ")
         if not id_proceso:
@@ -310,7 +315,6 @@ def carga_manual_procesos():
                  continue
             
 
-            #Esto no se si lo vamos a mantener, si igual tendria que permitirse, solo para la estadistica?
             if tamaño > 250:
                 print("El tamaño del proceso excede la capacidad máxima permitida (250 KB). Intente nuevamente.")
                 continue
@@ -723,6 +727,8 @@ def mostrarPosCPU(posCpu):
     gotoxy(120,21+posCpu)
     print("\033[1m\033[30m\033[47m 🡄 CPU \033[0m")
 
+
+
 ###################################### ACÁ EMPIEZA EL CÓDIGO ######################################
 
 ejecutarMenu()
@@ -874,7 +880,6 @@ while cantProcesosRestantes > 0:
     msvcrt.getch()
     limpiar_pantalla()
 
-
     #Lleva procesos desde nuevos hacia MP y L/S
     planifLargoPlazo()
 
@@ -972,4 +977,4 @@ while cantProcesosRestantes > 0:
 limpiar_pantalla()
 tablaTerminados()
 msvcrt.getch()
-#limpiar_pantalla()
+

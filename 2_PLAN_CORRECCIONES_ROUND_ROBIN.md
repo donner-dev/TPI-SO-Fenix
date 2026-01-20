@@ -61,6 +61,10 @@
 
 ---
 
+
+
+
+
 ### 📋 Problema 2: SRTF CON PREEMPSIÓN (No está implementado)
 
 #### ❌ Problema Identificado
@@ -355,6 +359,7 @@ Antes de entregar, validen:
 - Verificar cada corrección funciona
 
 ⚠️ **Comunicación en equipo**
+
 - Coordinar cambios para evitar conflictos
 - Revisar mutuamente el código
 
