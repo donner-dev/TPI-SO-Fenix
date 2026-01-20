@@ -340,7 +340,7 @@ def main():
                 print(f"INTERRUPCION DE EJECUCION, SO FINALIZA ADMISION DE PROCESOS NUEVOS")
                 print(f"Presione una tecla para continuar ... ")
                 Lis.msvcrt.getch() # espera cualquier tecla
-                MA.limpiar_pantalla()     
+                MA.limpiar_pantalla()
         
         # Buscar proceso a ejecutar
         puntero = Lis.BuscarSRTF()
