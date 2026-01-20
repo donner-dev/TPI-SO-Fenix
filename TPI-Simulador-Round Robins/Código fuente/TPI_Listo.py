@@ -906,7 +906,7 @@ def buscarSiguiente():
 #
 #
 ####################################### ACÁ EMPIEZA EL CÓDIGO ######################################
-#
+#=========================== COLUMNA VERTEBRAL DEL SIMULADOR
 #ejecutarMenu()
 #
 ##CARGA DE ARCHIVO EN NUEVOS#
@@ -929,36 +929,14 @@ def buscarSiguiente():
 #else:
 #    listaNuevos= carga_manual_procesos()
 #    
-#
-##Mostrar pantalla
-#limpiar_pantalla()
-#tablaNuevos()
-#print("Presione una tecla para continuar...")
-#informacionEjecucion()
-#msvcrt.getch()
-#limpiar_pantalla()
-#
-##esto casi nunca se va a ejecutar, está por las dudas:
-#alcanzarTiempoOciosoInicio()
-#
+
 #
 ############ PLP ############
 #############(1)#############
 ##Admisión principal
 #planifLargoPlazo()
 #
-#
-##Mostrar pantalla
-#limpiar_pantalla()
-#listosYSuspendidos()
-#tablaMemoriaPrincipal()
-#mostrarProcesoCPU(listaMP[BuscarSRTF()]["Proceso_alojado"])
-#mostrarPosCPU(BuscarSRTF())
-#informacionEjecucion()
-#print("Presione una tecla para continuar...")
-#msvcrt.getch()
-#limpiar_pantalla()
-#
+
 #
 #
 ############ SRTF ###########
@@ -972,18 +950,7 @@ def buscarSiguiente():
 #listaMP[BuscarSRTF()]["Proceso_alojado"]["t_retorno"]= listaMP[BuscarSRTF()]["Proceso_alojado"]["t_irrupcion"]
 #
 #T_Simulacion = T_Simulacion + listaMP[BuscarSRTF()]["Proceso_alojado"]["tiempo_restante"]
-#
-##Mostrar pantalla
-#limpiar_pantalla()
-#listosYSuspendidos()
-#tablaMemoriaPrincipal()
-#mostrarProcesoCPU(listaMP[BuscarSRTF()]["Proceso_alojado"])
-#mostrarPosCPU(BuscarSRTF())
-#informacionEjecucion()
-#print("Presione una tecla para continuar...")
-#msvcrt.getch()
-#limpiar_pantalla()
-#
+
 #
 ######### EJECUCION #########
 #############(3)#############
@@ -991,18 +958,7 @@ def buscarSiguiente():
 #
 #listaMP[BuscarSRTF()]["Proceso_alojado"]["tiempo_restante"] = 0
 #
-#
-##Mostrar pantalla
-#limpiar_pantalla()
-#listosYSuspendidos()
-#tablaMemoriaPrincipal()
-#mostrarProcesoCPU(listaMP[BuscarSRTF()]["Proceso_alojado"])
-#mostrarPosCPU(BuscarSRTF())
-#informacionEjecucion()
-#print("Presione una tecla para continuar...")
-#msvcrt.getch()
-#limpiar_pantalla()
-#
+
 #
 ##Mandar a lista Terminados (sí o sí uno ejecuta)
 #mandarTerminados(listaMP[BuscarSRTF()]["Proceso_alojado"],BuscarSRTF())
@@ -1026,18 +982,7 @@ def buscarSiguiente():
 #if HayProcesosCargados:
 #    posPreparadoSRTF= BuscarSRTF()
 #
-#
-##Mostrar pantalla
-#limpiar_pantalla()
-#listosYSuspendidos()
-#tablaMemoriaPrincipal()
-#mostrarProcesoCPU(listaMP[BuscarSRTF()]["Proceso_alojado"])
-#mostrarPosCPU(BuscarSRTF())
-#informacionEjecucion()
-#print("Presione una tecla para continuar...")
-#msvcrt.getch()
-#limpiar_pantalla()
-#
+
 #
 ############# BUCLE DE EJECUCIÓN #############
 #while cantProcesosRestantes > 0:
@@ -1045,17 +990,7 @@ def buscarSiguiente():
 #    #Lleva procesos desde L/S a MP
 #    planifMedioPlazo()
 #
-#    #Mostrar pantalla
-#    limpiar_pantalla()
-#    listosYSuspendidos()
-#    tablaMemoriaPrincipal()
-#    mostrarProcesoCPU(listaMP[BuscarSRTF()]["Proceso_alojado"])
-#    mostrarPosCPU(BuscarSRTF())
-#    informacionEjecucion()
-#    print("Presione una tecla para continuar...")
-#    msvcrt.getch()
-#    limpiar_pantalla()
-#
+
 #    #Lleva procesos desde nuevos hacia MP y L/S
 #    planifLargoPlazo()
 #
@@ -1064,17 +999,7 @@ def buscarSiguiente():
 #        posPreparadoSRTF= BuscarSRTF()
 #        #como resultado, entrará al caso de no apropiación
 #
-#    #Mostrar pantalla
-#    limpiar_pantalla()
-#    listosYSuspendidos()
-#    tablaMemoriaPrincipal()
-#    mostrarProcesoCPU(listaMP[BuscarSRTF()]["Proceso_alojado"])
-#    mostrarPosCPU(BuscarSRTF())
-#    informacionEjecucion()
-#    print("Presione una tecla para continuar...")
-#    msvcrt.getch()
-#    limpiar_pantalla()
-#
+
 #    posLuegoDeAdmisionSRTF= BuscarSRTF()
 #
 #    if posLuegoDeAdmisionSRTF != posPreparadoSRTF:
@@ -1082,18 +1007,9 @@ def buscarSiguiente():
 #    else:
 #        posSRTFterminado= posLuegoDeAdmisionSRTF
 #
-#    #Mostrar pantalla
-#    limpiar_pantalla()
-#    listosYSuspendidos()
-#    tablaMemoriaPrincipal()
-#    mostrarProcesoCPU(listaMP[BuscarSRTF()]["Proceso_alojado"])
-#    mostrarPosCPU(BuscarSRTF())
-#    informacionEjecucion()
-#    print("Presione una tecla para continuar...")
-#    msvcrt.getch()
-#    limpiar_pantalla()
+
 #
-#
+#====== ETAPA PARA REPORTE FINAL ===============
 #    #Cálculos de tiempo de espera y de retorno
 #    resPosSRTF = BuscarSRTF()
 #    resProceso = listaMP[resPosSRTF]["Proceso_alojado"]

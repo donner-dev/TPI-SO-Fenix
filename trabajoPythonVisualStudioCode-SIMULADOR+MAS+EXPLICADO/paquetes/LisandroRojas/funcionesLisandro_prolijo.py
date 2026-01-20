@@ -516,7 +516,7 @@ def solo_mostrarTablas():
 def informe_final():
     console = Console()
     total_sim = vGlobal.T_simulador or 0
-    rendimiento = (len(vGlobal.listaTerminados) / total_sim * 100) if total_sim > 0 else 0
+    rendimiento = (len(vGlobal.listaTerminados) / total_sim ) if total_sim > 0 else 0
     CPUociso_porcentaje = (vGlobal.T_CPU_ocioso / total_sim * 100) if total_sim > 0 else 0
     usoCPU_porcentaje = (vGlobal.T_usoCPU_TotalGeneral / total_sim * 100) if total_sim > 0 else 0
 
@@ -535,7 +535,7 @@ def informe_final():
         str(vGlobal.T_simulador),
         str(vGlobal.T_usoCPU_TotalGeneral),
         f"{usoCPU_porcentaje:.2f} %",
-        f"{rendimiento:.2f} %",
+        f"{rendimiento:.4f} procesos/unidad de tiempo",
         Text(f"{promedioT_Espera:.2f}", style="yellow"),
         Text(f"{promRetorno:.2f}", style="yellow")
     )
