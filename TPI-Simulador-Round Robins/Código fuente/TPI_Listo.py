@@ -721,9 +721,8 @@ def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
         print(f"El proceso {proceso['id']} ha finalizado su ejecución.")
         # Manda a terminados
         mandarTerminados(proceso, indice_procesoEjecucion) # esta funcion tiene que copiar este proceso en la lista de terminados y removerlo de listos
-        # Disminuye multiprogramación y planificador de memoria
+        # Disminuye multiprogramación y se activa planificador de memoria
         ADMICION_MULTI_5()# Recalcula multiprogramación después de mandar a terminados
-        # Romper el ciclo para buscar un nuevo proceso SRTF
         return True
 
 ####################################### FUNCIONES GRÁFICAS ######################################
