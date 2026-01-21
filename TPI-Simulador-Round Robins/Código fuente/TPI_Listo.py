@@ -949,14 +949,16 @@ while len(listaTerminados) < len(listaNuevos):
     #CICLOS OCIOSOS SI NO HAY PROCESOS EN LISTOS
     proceso_siguiente = buscarSiguiente() #esta parte revisa los ciclos osiosos antes de tratar cualquier proceso
     CiclosOciosos(proceso_siguiente)
-    # PRIMERO admision de procesos luego de ciclos ociosos
+    # PRIMERO ciclos ociosos para hacer admision de procesos
     # tiempo del simulador parejo con los procesos que van llegando para hacer la admision de ese instante
     ADMICION_MULTI_5()
     ########## EJECUCION #########
-    #SEGUNDO busca el proceso SRTF
-    indice_procesoEjecucion = BuscarSRTF()
+    #SEGUNDO buscar el proceso SRTF
+    indice_procesoEjecucion = BuscarSRTF() # retorna el indice de la particion en memoria principal que contiene el proceso con menor tiempo restante
     procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
-    while procesoEjecucion["tiempo_restante"] > 0:
+    if procesoEjecucion is None:
+        continue # vuelve al while mayor para un ciclo ocioso
+    while (procesoEjecucion is not None) and (procesoEjecucion["tiempo_restante"] > 0):
         # Ejecutar un ciclo de CPU
         procesoEjecucion["tiempo_restante"] -= 1
         T_simulador += 1
@@ -968,18 +970,26 @@ while len(listaTerminados) < len(listaNuevos):
         ADMICION_MULTI_5() #acomoda memoria si es necesario y luego termina de admitir
         indice_procMasPrioridad = BuscarSRTF()
         procMasPrioridad = listaMP[indice_procMasPrioridad]["Proceso_alojado"]
+        
+        #revisa si el proceso en ejecucion ha terminado
         if detectar_terminacion(procesoEjecucion, indice_procesoEjecucion):#la termianacion del proceso en ejecucion ya usa ADMICION_MULTI_5()
             procesoEjecucion = None
-            break  # salir del while para buscar un nuevo proceso SRTF
+                
+        # Manejo de cambio de contexto
         if (len(listaListos) > 0) and (procesoEjecucion is None):
             print(f"Cambio de contexto al siguiente proceso SRTF.")
             indice_procesoEjecucion = BuscarSRTF()
             procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
             print(f"Cambio de contexto: {procesoEjecucion['id']} ingresa a CPU")
-        if procMasPrioridad["id"] != procesoEjecucion["id"]:
-            print(f"Cambio de contexto: {procesoEjecucion['id']} sale -> {procMasPrioridad['id']} APROPIA CPU")
-            procesoEjecucion = procMasPrioridad
-            indice_procesoEjecucion = indice_procMasPrioridad
+        
+        # control de APROPIACION de CPU para la admision de nuevos procesos causado por ADMICION_MULTI_5() en la linea 970
+        if procMasPrioridad is not None:      
+            if procMasPrioridad["id"] != procesoEjecucion["id"]:
+                print(f"Cambio de contexto: {procesoEjecucion['id']} sale -> {procMasPrioridad['id']} APROPIA CPU")
+                procesoEjecucion = procMasPrioridad
+                indice_procesoEjecucion = indice_procMasPrioridad
+                # la tabla de CPU se actualiza en la siguiente sección gráfica
+        
         if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
             banderaMostrarTablas = False # resetear bandera para otro ciclo
             #Funciones gráficas de pantalla
