@@ -216,12 +216,12 @@ Esperado:
 
 ## 📝 Checklist de Implementación
 
-- [ ] Encontré el loop principal en TPI_Listo.py
-- [ ] Identifiqué dónde se incrementa/decrementa tiempo
-- [ ] Cambié la estructura a ciclo unitario (T += 1 en CADA iteración)
-- [ ] Creo función `hay_procesos_que_llegan(T)`
-- [ ] Creo función `detectar_terminacion(proceso)`
-- [ ] Manejo ciclos ociosos (sin bloquear el simulador)
+- [✅] Encontré el loop principal en TPI_Listo.py
+- [✅] Identifiqué dónde se incrementa/decrementa tiempo
+- [✅] Cambié la estructura a ciclo unitario (T += 1 en CADA iteración)
+- [✅] Creo función `hay_procesos_que_llegan(T)` activa bandera de tablas al ingresar procesos en ADMICION_MULTI_5()
+- [✅] Creo función `detectar_terminacion(proceso)`
+- [✅] Manejo ciclos ociosos (sin bloquear el simulador)
 - [ ] Pasé Test 1 (tiempo incrementa correctamente)
 - [ ] Pasé Test 2 (detecta arribi en T intermedio)
 - [ ] Pasé Test 3 (maneja ciclos ociosos)

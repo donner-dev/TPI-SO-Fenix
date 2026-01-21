@@ -22,6 +22,7 @@ import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as Fun
 ###################################### VARIABLES GLOBALES ######################################
 listaNuevos=[]
 listaSuspendidos=[]
+listaListos=[]
 listaMP=[
     {
         "Particion": 1,
@@ -400,6 +401,7 @@ def leer_procesos(csv_filename: str):
                     "id": id_proceso,
                     "tamaño": tamaño_int,
                     "t_arribo": int(t_arribo),
+                    "t_arribo_MP": None, # <-- campo adicional para calculo de tiempos de retorno
                     "t_irrupcion": int(t_irrupcion),
                     "tiempo_restante": int(t_irrupcion),
                     "t_finalizacion": 0,
@@ -434,19 +436,7 @@ def leer_procesos(csv_filename: str):
 #            return False
 #    return True
 
-def BuscarSRTF():
-    menorTR = float('inf')
-    mejorPosSRTF = -1
 
-    for i, part in enumerate(listaMP):
-        if part["Ocupado"] and part["Dueño"] == "usuario":
-            # SRTF se basa en el tiempo restante de CPU
-            tr = part["Proceso_alojado"]["tiempo_restante"]
-            if tr < menorTR:
-                menorTR = tr
-                mejorPosSRTF = i
-
-    return mejorPosSRTF
 #
 def AsignPartBestFit(procActual):
     global T_Simulacion
@@ -470,14 +460,20 @@ def AsignPartBestFit(procActual):
 #def asignListaSuspendidos(procActual):
 #    listaSuspendidos.append(procActual)
 #
-#def mandarTerminados(procActual,posSRTF):
-#    #Quita proceso alojado de partición
-#    listaMP[posSRTF]["Proceso_alojado"]= {}
-#    #Hace que la partición esté disponible
-#    listaMP[posSRTF]["Ocupado"]= False
-#    #Lo lleva a la lista de terminados
-#    listaTerminados.append(procActual)
-#
+def mandarTerminados(procActual,indiceMP):
+    # Marcar finalización
+    procActual["t_finalizacion"] = T_simulador
+    # Calcular tiempo de retorno
+    procActual["t_retorno"] = procActual["t_finalizacion"] - procActual["t_arribo_MP"]
+    #Hace que la partición esté disponible
+    listaMP[indiceMP]["Ocupado"]= False
+    #Lo lleva a la lista de terminados
+    listaTerminados.append(procActual)
+    for p in listaListos():
+        if p["id"] == procActual["id"]:
+            listaListos.pop(procActual)
+            break
+
 #
 
 def BuscarSRTF() -> Optional[int]:
@@ -626,7 +622,9 @@ def ADMICION_MULTI_5():
                 if vGlobal.multiprogramacion >= 5:
                     return
         if not cambios:
-            break
+            break #sale del while si no hubo cambios
+        else:
+            banderaMostrarTablas = True # actualizar tablas en caso de cambios
     vGlobal.multiprogramacion = len(vGlobal.listaListos) + len(vGlobal.listaSuspendidos)
 
 
@@ -651,7 +649,7 @@ def CiclosOciosos(proceso_siguiente: Dict):
 
     # si hay procesos listos no hay ciclado ocioso
     if len(vGlobal.listaListos) > 0:
-        return
+        return 
 
     if not proceso_siguiente:
         return
@@ -661,9 +659,11 @@ def CiclosOciosos(proceso_siguiente: Dict):
         return
 
     if t_arribo >= vGlobal.T_simulador:
+        vGlobal.multiprogramacion = len(vGlobal.listaListos) + len(vGlobal.listaSuspendidos)
         avanzar = t_arribo - vGlobal.T_simulador
         vGlobal.T_CPU_ocioso += avanzar
         vGlobal.T_simulador = t_arribo
+        vGlobal.multiprogramacion = len(vGlobal.listaListos) + len(vGlobal.listaSuspendidos)
 
 def buscarSiguiente():
     """
@@ -715,6 +715,16 @@ def buscarSiguiente():
             return p
     return None
 
+def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
+    if proceso["tiempo_restante"] == 0:
+        banderaMostrarTablas = True
+        print(f"El proceso {proceso['id']} ha finalizado su ejecución.")
+        # Manda a terminados
+        mandarTerminados(proceso, indice_procesoEjecucion) # esta funcion tiene que copiar este proceso en la lista de terminados y removerlo de listos
+        # Disminuye multiprogramación y planificador de memoria
+        ADMICION_MULTI_5()# Recalcula multiprogramación después de mandar a terminados
+        # Romper el ciclo para buscar un nuevo proceso SRTF
+        return True
 
 ####################################### FUNCIONES GRÁFICAS ######################################
 #
@@ -930,83 +940,52 @@ def buscarSiguiente():
 #    listaNuevos= carga_manual_procesos()
 #    
 
-#
-############ PLP ############
 #############(1)#############
 ##Admisión principal
-#planifLargoPlazo()
-#
+ADMICION_MULTI_5()
 
-#
-#
-############ SRTF ###########
-#############(2)#############
-##Selección SRTF, suma Tsim y ejecución 
-#    #Selección SRTF
-#listaMP[BuscarSRTF()]
-#limpiar_pantalla()
-#    #Suma Tsim
-#
-#listaMP[BuscarSRTF()]["Proceso_alojado"]["t_retorno"]= listaMP[BuscarSRTF()]["Proceso_alojado"]["t_irrupcion"]
-#
-#T_Simulacion = T_Simulacion + listaMP[BuscarSRTF()]["Proceso_alojado"]["tiempo_restante"]
-
-#
-######### EJECUCION #########
-#############(3)#############
-#    #Ejecución SRTF
-#
-#listaMP[BuscarSRTF()]["Proceso_alojado"]["tiempo_restante"] = 0
-#
-
-#
-##Mandar a lista Terminados (sí o sí uno ejecuta)
-#mandarTerminados(listaMP[BuscarSRTF()]["Proceso_alojado"],BuscarSRTF())
-#multiprogramacion= multiprogramacion - 1
-#cantProcesosRestantes= cantProcesosRestantes - 1
-#
-#
-####### SRTF PREPARADO ######
-#############(4)#############
-##Selección SRTF sin ejecutar
-#
-##Parche: si solo entra a MP un proceso, una vez ejecutado el que estaba que no intente hacer SRTF de nuevo
-##Se hace este control para que, si no hay procesos cargados en memoria, que no prepare el SRTF
-#HayProcesosCargados = False
-#for i in range(len(listaMP)):
-#    if listaMP[i]["Proceso_alojado"] == {}:
-#        HayProcesosCargados = False
-#    else:
-#        HayProcesosCargados = True
-#
-#if HayProcesosCargados:
-#    posPreparadoSRTF= BuscarSRTF()
-#
-
-#
 ############# BUCLE DE EJECUCIÓN #############
-#while cantProcesosRestantes > 0:
-#
-#    #Lleva procesos desde L/S a MP
-#    planifMedioPlazo()
-#
+while len(listaTerminados) < len(listaNuevos):
+    #CICLOS OCIOSOS SI NO HAY PROCESOS EN LISTOS
+    proceso_siguiente = buscarSiguiente() #esta parte revisa los ciclos osiosos antes de tratar cualquier proceso
+    CiclosOciosos(proceso_siguiente)
+    # PRIMERO admision de procesos luego de ciclos ociosos
+    # tiempo del simulador parejo con los procesos que van llegando para hacer la admision de ese instante
+    ADMICION_MULTI_5()
+    ########## EJECUCION #########
+    #SEGUNDO busca el proceso SRTF
+    indice_procesoEjecucion = BuscarSRTF()
+    procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
+    while procesoEjecucion["tiempo_restante"] > 0:
+        # Ejecutar un ciclo de CPU
+        procesoEjecucion["tiempo_restante"] -= 1
+        T_simulador += 1
+        # Sumar tiempo de espera a los demas procesos en listaListos ya cargados para este ciclo
+        for otrosProcesos in listaListos:
+            if otrosProcesos["id"] != procesoEjecucion["id"]:
+                otrosProcesos["t_espera"] += 1
+        # Verificar si llegó un nuevo proceso para admisión
+        ADMICION_MULTI_5() #acomoda memoria si es necesario y luego termina de admitir
+        indice_procMasPrioridad = BuscarSRTF()
+        procMasPrioridad = listaMP[indice_procMasPrioridad]["Proceso_alojado"]
+        if detectar_terminacion(procesoEjecucion, indice_procesoEjecucion):#la termianacion del proceso en ejecucion ya usa ADMICION_MULTI_5()
+            procesoEjecucion = None
+            break  # salir del while para buscar un nuevo proceso SRTF
+        if (len(listaListos) > 0) and (procesoEjecucion is None):
+            print(f"Cambio de contexto al siguiente proceso SRTF.")
+            indice_procesoEjecucion = BuscarSRTF()
+            procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
+            print(f"Cambio de contexto: {procesoEjecucion['id']} ingresa a CPU")
+        if procMasPrioridad["id"] != procesoEjecucion["id"]:
+            print(f"Cambio de contexto: {procesoEjecucion['id']} sale -> {procMasPrioridad['id']} APROPIA CPU")
+            procesoEjecucion = procMasPrioridad
+            indice_procesoEjecucion = indice_procMasPrioridad
+        if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
+            banderaMostrarTablas = False # resetear bandera para otro ciclo
+            #Funciones gráficas de pantalla
+        
+    ########## FIN EJECUCION #########
 
-#    #Lleva procesos desde nuevos hacia MP y L/S
-#    planifLargoPlazo()
-#
-#    #Ejecución del parche: Si no había antes procesos cargados, acá se debe preparar el SRTF
-#    if not HayProcesosCargados:
-#        posPreparadoSRTF= BuscarSRTF()
-#        #como resultado, entrará al caso de no apropiación
-#
-
-#    posLuegoDeAdmisionSRTF= BuscarSRTF()
-#
-#    if posLuegoDeAdmisionSRTF != posPreparadoSRTF:
-#        posSRTFterminado= posLuegoDeAdmisionSRTF
-#    else:
-#        posSRTFterminado= posLuegoDeAdmisionSRTF
-#
 
 #
 #====== ETAPA PARA REPORTE FINAL ===============
