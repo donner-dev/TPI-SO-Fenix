@@ -1,6 +1,7 @@
 ###################################### IMPORTS ######################################
 import csv
 from pathlib import Path
+from typing import Dict
 from rich.console import Console
 from rich.table import Table
 import msvcrt
@@ -209,10 +210,6 @@ def mostrar_menu():
     #posicion del puntero en la posicion maxima en x e y para dibujar toda la pantalla
     gotoxy(xMaxPantalla,yMaxPantalla+2)
 
-
-
-
-""" Esto no me esta andando cuando lo uso :( Para revisar con los otros  -Donner """
 #Desplazamiento y selección en el menú principal
 def selec_opcion_menu1():
     # Siempre devuelve la primera opción (0 + 1 = 1)
@@ -533,6 +530,48 @@ def BuscarSRTF() -> Optional[int]:
     return None
 
 ### tenemos que adaptar los nombres de funciones y de campos de valores de los diccionarios de procesos
+
+""" Funciones que usa CARGAR_MPconMS (Agustin e Isabel)"""
+#cabeEnAlgunaParticionLIBRE(proceso)
+#mover_aColaListo(proceso)
+#BestFitCICLO_ADMICION(vGlobal.aux)
+#cargarProcesoAlojado(vGlobal.MemoriaPrincipal, puntero, vGlobal.aux)
+
+def actualizar_proceso_enMemoriaPrincipal(lista: List, particion_actualizada: Dict) -> bool:
+    """Actualiza los campos de una partición en MemoriaPrincipal (por Particion).
+    ════════════════════════════════════════════════════════════════════════
+    FIFO + MEMORIA PRINCIPAL
+    ════════════════════════════════════════════════════════════════════════
+    - Esta función actualiza una partición completa de MP.
+    - Lo que muta aquí son los campos de la partición (Ocupado, Fragmentacion_Interna, etc.)
+      Y el dict "Proceso_alojado" que es una REFERENCIA a un proceso en listaListos.
+
+    - Si modificas particion_actualizada["Proceso_alojado"]["t_RestanteCPU"],
+      eso afecta a AMBOS:
+      a) El proceso en listaListos (que es la misma referencia)
+      b) El dict en MP[i]["Proceso_alojado"]
+    
+    - Esto garantiza que la cola FIFO (listaListos) y la Memoria Principal
+      están siempre sincronizadas.
+    """
+    for p in lista:
+        if p.get("Particion") == particion_actualizada.get("Particion"):
+            p.update(particion_actualizada)
+            return True
+    return False
+
+def cargarProcesoAlojado(memoria: List, puntero: int, proceso_actual: Dict):
+    """
+    Asigna por referencia el dict del proceso a la partición seleccionada.
+    """
+    particion = memoria[puntero]
+    particion["Proceso_alojado"] = proceso_actual
+    particion["Fragmentacion_Interna"] = int(particion["TamañoTotal"] - proceso_actual.get("tamaño", 0))
+    particion["Ocupado"] = True
+    actualizar_proceso_enMemoriaPrincipal(vGlobal.MemoriaPrincipal, particion)
+
+#SuspendidosYListos() ????
+
 def CARGAR_MPconMS():
     """
     Carga MP con procesos desde suspendidos hasta tener 3 en listos.
@@ -566,6 +605,57 @@ def CARGAR_MPconMS():
         if not cambios:
             break
 
+#Funciones adaptadas que usa ADMICION_MULTI_5 (Agustin e Isabel)
+def  marcar_procesoNuevo_Ingresado(procesoNuevo: Dict):
+    #Marca en listaProcesos que el proceso ya fue ingresado (bandera_baja_logica)
+    for p in vGlobal.listaProcesos:
+        if p.get("id") == procesoNuevo.get("id") and p.get("bandera_baja_logica") is False:
+            p["bandera_baja_logica"] = True
+            break  #return True?
+
+def actualizar_proceso_enLista(lista: List, proceso_actualizado: Dict) -> bool:
+    """ 
+    Actualiza el dicc de un proceso dentro de una lista por ID
+    TRUE = Lo actualizo, FALSE = No lo encontré
+    (!) Si el proceso tambien esta en MP como referencia, la mutacion se propaga automaticamente
+
+    Ejemplo de sincronización automática:
+    - p_listo = listaListos[i] (misma referencia que MP[j]["Proceso_alojado"])
+    - actualizar_proceso_enLista(listaListos, {"id": p_listo["id"], "t_RestanteCPU": 5})
+    - Ahora MP[j]["Proceso_alojado"]["t_RestanteCPU"] también es 5
+    
+    Este es el corazón de cómo FIFO + MemoriaPrincipal se sincronizan sin
+    copias redundantes.
+    """
+    for p in lista:
+        if p.get("id") == proceso_actualizado.get("id"):
+            p.update(proceso_actualizado)
+            return True
+    return False
+
+def mover_aColaSuspendido(proceso_actual:Dict):
+    """
+    Construye el dict necesario y mueve el proceso a la lista de suspendidos.
+    Mantiene referencias correctas usando actualizar_proceso_enLista cuando corresponde.
+    """
+    marcar_procesoNuevo_Ingresado(proceso_actual)
+
+    cargarTiempoRespuesta = int(vGlobal.T_simulador - proceso_actual.get("t_arribo", vGlobal.T_simulador))
+    cargarTiempoIngreso = int(proceso_actual.get("t_ingreso", vGlobal.T_simulador))
+    t_Restante = int(proceso_actual.get("t_RestanteCPU", proceso_actual.get("t_irrupcion", 0)))
+
+    proceso_suspendido = {
+        "id": proceso_actual.get("id"),
+        "t_arribo": proceso_actual.get("t_arribo"),
+        "tamaño": proceso_actual.get("tamaño"),
+        "t_irrupcion": proceso_actual.get("t_irrupcion"),
+        "t_Respuesta": cargarTiempoRespuesta,
+        "t_ingreso": cargarTiempoIngreso,
+        "t_RestanteCPU": t_Restante,
+    }
+    if not actualizar_proceso_enLista(vGlobal.listaSuspendidos, proceso_suspendido):
+        vGlobal.listaSuspendidos.append(proceso_suspendido)
+    
 
 def ADMICION_MULTI_5():
     """
