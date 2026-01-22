@@ -14,8 +14,7 @@ sys.path.append('..')
 """ Importé las funciones de SIMULADOR.py  para tenerlo modulado como se habia discutido (vamos viendo si queda bien o no) """
 import paquetes.LisandroRojas.funcionesLisandro_prolijo as Lis
 import paquetes.AgustinVeron.Menu as MA
-import paquetes.estado_global as vGlobal
-import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as FunArchivos
+import paquetes.estado_global as import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as FunArchivos
 
 
 
@@ -58,6 +57,8 @@ listaTerminados=[]
 T_Simulacion=0
 cantProcesosRestantes=0
 multiprogramacion=0
+aux=None
+banderaMostrarTablas=False
 
 #variables de cálculo:
 Sumatoria_TRetorno= 0
@@ -326,11 +327,17 @@ def carga_manual_procesos():
                 "id": str(id_proceso),
                 "tamaño": int(tamaño),
                 "t_arribo": int(t_arribo),
+                "t_arribo_MP": None,
                 "t_irrupcion" : int(t_irrupcion),
                 "tiempo_restante":0, 
                 "t_finalizacion":0,
                 "t_retorno": 0,
+                "total_retorno": 0,
                 "t_espera": 0,
+                "t_ingreso": 0,
+                "t_respuesta": 0,
+                "t_totalenColaListo": 0,
+                "bandera_baja_logica": False,
                 "admitido": False
             }
         procesos.append(proceso)
@@ -403,7 +410,12 @@ def leer_procesos(csv_filename: str):
                     "tiempo_restante": int(t_irrupcion),
                     "t_finalizacion": 0,
                     "t_retorno": 0,
+                    "total_retorno": None,
                     "t_espera": 0,
+                    "t_ingreso": None,
+                    "t_respuesta": None,
+                    "t_totalenColaListo": 0,
+                    "bandera_baja_logica": False,
                     "admitido": False
                 }
             except ValueError as e:
@@ -427,51 +439,76 @@ def leer_procesos(csv_filename: str):
 
 #################################### FUNCIONES DE LA EJECUCIÓN ###################################
 
-#def MPllena():
-#    for p in range(len(listaMP)):
-#        if listaMP[p]["Ocupado"] == False:
-#            return False
-#    return True
+def MPllena():
+    for p in range(len(listaMP)):
+        if listaMP[p]["Ocupado"] == False:
+            return False
+    return True
 
-
-#
+#Adaptar best Fit
 def AsignPartBestFit(procActual):
     global T_Simulacion
     menorDifTamaño = 10**10
-    pos = -1
+    pos = -1 
     for p in range(len(listaMP)):
         difTamaño= listaMP[p]["TamañoTotal"] - procActual["tamaño"]
         if ((difTamaño >= 0) and (difTamaño <= menorDifTamaño) and (listaMP[p]["Ocupado"] == False) and (not MPllena())):
             menorDifTamaño = difTamaño
             pos = p
-    
+
+    #si la posicion p es distinta de -1, se escogió una partición apta
     if pos != -1:
-        listaMP[pos]["Fragmentacion Interna"]= listaMP[pos]["TamañoTotal"] - procActual["tamaño"]
-        #Alojamiento para posterior cálculo de tiempos correspondientes
+        listaMP[pos]["Fragmentacion Interna"]= listaMP[pos]["TamañoTotal"] - procActual["tamaño"]      
         listaMP[pos]["Proceso_alojado"]= procActual
-        listaMP[pos]["Proceso_alojado"]["t_retorno"]= 0
-        listaMP[pos]["Proceso_alojado"]["t_espera"]= T_Simulacion 
         listaMP[pos]["Ocupado"]= True
 
-#
-#def asignListaSuspendidos(procActual):
-#    listaSuspendidos.append(procActual)
-#
+def cabeEnAlgunaParticionLIBRE(listaMP,proc):
+    for p in range(len(listaMP)):
+        difTamaño= listaMP[p]["TamañoTotal"] - proc["tamaño"]
+        if ((difTamaño >= 0) and (listaMP[p]["Ocupado"] == False)):
+            return True
+    return False
+
+def mover_aColaListo(procActual):
+    #Revisar tiempos para informe final!
+
+    #procActual["bandera_baja_logica"] = True
+    #if procActual["t_respuesta"] == None:
+    #    procActual["t_respuesta"] = T_Simulacion - procActual["t_arribo"]
+    #else: 
+    #    procActual["t_respuesta"] = procActual.get("t_respuesta")
+
+    #procActual["t_totalenColaListo"]= 0    
+
+    ##preparar tiempo de ingreso: Instante en que el sim. lo acomoda en mem. secundaria
+    #if procActual["t_ingreso"] == None:
+    #    procActual["t_ingreso"] = T_Simulacion
+    #else:
+    #    procActual["t_ingreso"] = procActual.get("t_ingreso")
+
+    ##preparar tiempo de arribo: cuando llega a memoria principal
+    #procActual["t_arribo_MP"] = T_Simulacion
+    #ingresa proceso a listaListos (cola de turnos)
+    global aux
+    aux = procActual
+    listaListos.append(procActual)
+
 def mandarTerminados(procActual,indiceMP):
-    # Marcar finalización
-    procActual["t_finalizacion"] = T_simulador
-    # Calcular tiempo de retorno
-    procActual["t_retorno"] = procActual["t_finalizacion"] - procActual["t_arribo_MP"]
+    #Revisar tiempos para informe final!
+    
+    #Marcar finalización
+    #procActual["t_finalizacion"] = T_Simulacion
+    #procActual["total_retorno"] = T_Simulacion - procActual["t_arribo_MP"] 
+
     #Hace que la partición esté disponible
     listaMP[indiceMP]["Ocupado"]= False
-    #Lo lleva a la lista de terminados
+    #quitar de la listaListos el proceso
     listaTerminados.append(procActual)
     for p in listaListos():
         if p["id"] == procActual["id"]:
             listaListos.pop(procActual)
             break
 
-#
 
 def BuscarSRTF() -> Optional[int]:
     """
@@ -507,12 +544,13 @@ def BuscarSRTF() -> Optional[int]:
     - SRTF (selección de quién entra a CPU)
     - Referencias compartidas (sincronización automática entre listas)
     """
-    if len(vGlobal.listaListos) <1:
+    if len(listaListos) < 1:
         return None
-
+    
+    #Busca proceso en la cola de turnos (lista de listos)
     menorTR = float("inf")
     procesoElegido = None
-    for proc in vGlobal.listaListos:
+    for proc in listaListos:
         tr = proc.get("t_RestanteCPU", 0)
         if tr > 0 and tr < menorTR:
             menorTR = tr
@@ -521,14 +559,15 @@ def BuscarSRTF() -> Optional[int]:
     if procesoElegido is None:
         return None
 
-    # Comparar por 'id' en lugar de 'is' (identidad)
+    #El proceso encontrado en listaListos, ahora busca su índice en memoria
     proceso_id = procesoElegido.get("id")
-    for i, particion in enumerate(vGlobal.MemoriaPrincipal):
+    for i, particion in enumerate(listaMP):
         proc_alojado = particion.get("Proceso_alojado")
         if proc_alojado and proc_alojado.get("id") == proceso_id:
             return i
     return None
 
+<<<<<<< Updated upstream
 ### tenemos que adaptar los nombres de funciones y de campos de valores de los diccionarios de procesos
 
 """ Funciones que usa CARGAR_MPconMS (Agustin e Isabel)"""
@@ -577,29 +616,26 @@ def CARGAR_MPconMS():
     Elimina de suspendidos los procesos que ya están en la lista de listos.
     Usa slice assignment [:] para mantener la referencia al objeto lista original,
     evitando que otras referencias externas pierdan sincronía.
+=======
+>>>>>>> Stashed changes
 
-    ════════════════════════════════════════════════════════════════════════
-    FIFO EN PROMOCIÓN DE MEMORIA SECUNDARIA A PRINCIPAL
-    ════════════════════════════════════════════════════════════════════════
-    - listaSuspendidos es una cola FIFO de procesos que no caben en MP.
-    - Cuando libera espacio en MP (un proceso termina), esta función trae
-      procesos de listaSuspendidos hacia listaListos.
-    - Lo hace RECORRIENDO EN ORDEN (FIFO): los primeros suspendidos son los
-      primeros en entrar a MP.
-    - Esto mantiene coherencia: los primeros que llegaron, primeros entran a MP,
-      primeros se ejecutan.
-    - La relación con MemoriaPrincipal es directa: mover_aColaListo() crea una
-      referencia que cargarProcesoAlojado() coloca en una partición de MP.
+def QuitarListosDeSuspendidos():
     """
-    while len(vGlobal.listaListos) < 3:
+    Elimina de suspendidos los procesos que ya están en la lista de listos.
+    """
+    ids_listos = {p.get("id") for p in listaListos}
+    listaSuspendidos[:] = [p for p in listaSuspendidos if p.get("id") not in ids_listos]
+
+
+def CARGAR_MPconMS():
+    while len(listaListos) < 3:
         cambios = False
-        for ingresa in list(vGlobal.listaSuspendidos):
+        for ingresa in list(listaSuspendidos):
             if cabeEnAlgunaParticionLIBRE(ingresa):
                 mover_aColaListo(ingresa)
-                puntero = BestFitCICLO_ADMICION(vGlobal.aux)
-                if puntero is not None:
-                    cargarProcesoAlojado(vGlobal.MemoriaPrincipal, puntero, vGlobal.aux)
+                AsignPartBestFit(aux)
                 cambios = True
+<<<<<<< Updated upstream
         #SuspendidosYListos() lo voy a poner directamente aca xq es super especifico de esta funcion
         ids_listos = {p.get("id") for p in vGlobal.listaListos}
         vGlobal.listaSuspendidos[:] = [p for p in vGlobal.listaSuspendidos if p.get("id") not in ids_listos]
@@ -657,6 +693,12 @@ def mover_aColaSuspendido(proceso_actual:Dict):
     if not actualizar_proceso_enLista(vGlobal.listaSuspendidos, proceso_suspendido):
         vGlobal.listaSuspendidos.append(proceso_suspendido)
     
+=======
+        QuitarListosDeSuspendidos()
+        if not cambios:
+            break
+
+>>>>>>> Stashed changes
 def ADMICION_MULTI_5():
     """
     Admite procesos manteniendo multiprogramacion <= 5 y hasta 3 procesos en
@@ -688,33 +730,39 @@ def ADMICION_MULTI_5():
     - Modificar listaListos afecta automáticamente a MemoriaPrincipal porque
       es la MISMA REFERENCIA.
     """
-    vGlobal.multiprogramacion = len(vGlobal.listaListos) + len(vGlobal.listaSuspendidos)
-    if vGlobal.multiprogramacion >= 5:
+    global multiprogramacion
+
+    #verif. si la suma de procesos en el ámbito de mpg es >=5
+    multiprogramacion = len(listaListos) + len(listaSuspendidos)
+    if multiprogramacion >= 5:
         return
 
-    if len(vGlobal.listaListos) < 3 and vGlobal.listaSuspendidos:
+    #Planificador mediano plazo (PMP)
+    #si listaListos menor a 3 y listaSuspendidos no vacía 
+    if len(listaListos) < 3 and listaSuspendidos:
         CARGAR_MPconMS()
 
-    while vGlobal.multiprogramacion < 5:
+    #Planificador largo plazo (PLP)
+    while multiprogramacion < 5:
         cambios = False
-        for proceso in vGlobal.listaProcesos:
-            if proceso.get("bandera_baja_logica") is False and proceso.get("t_arribo") <= vGlobal.T_simulador:
-                if len(vGlobal.listaListos) < 3 and cabeEnAlgunaParticionLIBRE(proceso):
+        for proceso in listaNuevos:
+            if proceso.get("bandera_baja_logica") is False and proceso.get("t_arribo") <= T_simulador:
+                #Revisa mandar a Listos
+                if len(listaListos) < 3 and cabeEnAlgunaParticionLIBRE(proceso):
                     mover_aColaListo(proceso)
-                    puntero = BestFitCICLO_ADMICION(vGlobal.aux)
-                    if puntero is not None:
-                        cargarProcesoAlojado(vGlobal.MemoriaPrincipal, puntero, vGlobal.aux)
+                    AsignPartBestFit(aux)
                     cambios = True
                 else:
                     mover_aColaSuspendido(proceso)
                     cambios = True
-                vGlobal.multiprogramacion = len(vGlobal.listaListos) + len(vGlobal.listaSuspendidos)
-                if vGlobal.multiprogramacion >= 5:
+                multiprogramacion = len(listaListos) + len(listaSuspendidos)
+                if multiprogramacion >= 5:
                     return
         if not cambios:
             break #sale del while si no hubo cambios
         else:
             banderaMostrarTablas = True # actualizar tablas en caso de cambios
+<<<<<<< Updated upstream
     vGlobal.multiprogramacion = len(vGlobal.listaListos) + len(vGlobal.listaSuspendidos)
 
 def cabeEnAlgunaParticion(listaMP,proc):
@@ -723,6 +771,9 @@ def cabeEnAlgunaParticion(listaMP,proc):
         if ((difTamaño >= 0) and (listaMP[p]["Ocupado"] == False)):
             return True
     return False
+=======
+    multiprogramacion = len(listaListos) + len(listaSuspendidos)
+>>>>>>> Stashed changes
 
 # aca agregamos las funciones de ciclos osiosos y la control de multiprogramacion == 0 para adelantar tiempo de simulacion a los intantes de arribos
 
@@ -732,10 +783,10 @@ def CiclosOciosos(proceso_siguiente: Dict):
     y acumula el tiempo de CPU ocioso.
     """
     # recalcular multiprogramacion
-    vGlobal.multiprogramacion = len(vGlobal.listaListos) + len(vGlobal.listaSuspendidos)
+    multiprogramacion = len(listaListos) + len(listaSuspendidos)
 
     # si hay procesos listos no hay ciclado ocioso
-    if len(vGlobal.listaListos) > 0:
+    if len(listaListos) > 0:
         return 
 
     if not proceso_siguiente:
@@ -745,12 +796,12 @@ def CiclosOciosos(proceso_siguiente: Dict):
     if t_arribo is None:
         return
 
-    if t_arribo >= vGlobal.T_simulador:
-        vGlobal.multiprogramacion = len(vGlobal.listaListos) + len(vGlobal.listaSuspendidos)
-        avanzar = t_arribo - vGlobal.T_simulador
-        vGlobal.T_CPU_ocioso += avanzar
-        vGlobal.T_simulador = t_arribo
-        vGlobal.multiprogramacion = len(vGlobal.listaListos) + len(vGlobal.listaSuspendidos)
+    if t_arribo >= T_simulador:
+        multiprogramacion = len(listaListos) + len(listaSuspendidos)
+        avanzar = t_arribo - T_simulador
+        T_CPU_ocioso += avanzar
+        T_simulador = t_arribo
+        multiprogramacion = len(listaListos) + len(listaSuspendidos)
 
 def buscarSiguiente():
     """
@@ -783,21 +834,21 @@ def buscarSiguiente():
     # primero pendientes ya arribados pero sin ingresar o el proceso que arribo en este ciclo
     pendiente=None
     #banderaEncontrado=False
-    for p in vGlobal.listaProcesos:
-        if (p.get("bandera_baja_logica") is False) and (p.get("t_arribo") <= vGlobal.T_simulador):
+    for p in listaProcesos:
+        if (p.get("bandera_baja_logica") is False) and (p.get("t_arribo") <= T_simulador):
             #banderaEncontrado=True
             pendiente=p
             #break
             return pendiente
-        if (p.get("t_arribo") == vGlobal.T_simulador):
+        if (p.get("t_arribo") == T_simulador):
             pendiente=p
             return pendiente
     #if banderaEncontrado==True:
     #    #print(f"Busqueda del siguiente PROCESO encontro un proceso esperando ingresar |ID: {pendiente["id"]} || T.ARRIBO: {pendiente["t_arribo"]} || TAMAÑO: {pendiente["tamaño"]} || T.IRRUPCION: {pendiente["t_irrupcion"]} |")
     #    return pendiente
     # próximo arribo futuro
-    for p in vGlobal.listaProcesos:
-        if (p.get("t_arribo") > vGlobal.T_simulador) and (p.get("bandera_baja_logica") is False):
+    for p in listaProcesos:
+        if (p.get("t_arribo") > T_simulador) and (p.get("bandera_baja_logica") is False):
             #print(f"Busqueda del siguiente encontró un proceso del futuro {p}")
             return p
     return None
@@ -1032,6 +1083,7 @@ ADMICION_MULTI_5()
 
 ############# BUCLE DE EJECUCIÓN #############
 while len(listaTerminados) < len(listaNuevos):
+    banderaMostrarTablas = False # bandera para mostrar tablas si hay cambios en admision o terminacion
     #CICLOS OCIOSOS SI NO HAY PROCESOS EN LISTOS
     proceso_siguiente = buscarSiguiente() #esta parte revisa los ciclos osiosos antes de tratar cualquier proceso
     CiclosOciosos(proceso_siguiente)
@@ -1045,6 +1097,7 @@ while len(listaTerminados) < len(listaNuevos):
     if procesoEjecucion is None:
         continue # vuelve al while mayor para un ciclo ocioso
     while (procesoEjecucion is not None) and (procesoEjecucion["tiempo_restante"] > 0):
+        banderaMostrarTablas = False # bandera para mostrar tablas si hay cambios en admision o terminacion
         # Ejecutar un ciclo de CPU
         procesoEjecucion["tiempo_restante"] -= 1
         T_simulador += 1
