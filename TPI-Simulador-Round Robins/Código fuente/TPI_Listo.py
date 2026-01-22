@@ -1,7 +1,6 @@
 ###################################### IMPORTS ######################################
 import csv
 from pathlib import Path
-from typing import Dict
 from rich.console import Console
 from rich.table import Table
 import msvcrt
@@ -211,6 +210,10 @@ def mostrar_menu():
     #posicion del puntero en la posicion maxima en x e y para dibujar toda la pantalla
     gotoxy(xMaxPantalla,yMaxPantalla+2)
 
+
+
+
+""" Esto no me esta andando cuando lo uso :( Para revisar con los otros  -Donner """
 #Desplazamiento y selección en el menú principal
 def selec_opcion_menu1():
     # Siempre devuelve la primera opción (0 + 1 = 1)
@@ -489,9 +492,16 @@ def mover_aColaListo(procActual):
     ##preparar tiempo de arribo: cuando llega a memoria principal
     #procActual["t_arribo_MP"] = T_Simulacion
     #ingresa proceso a listaListos (cola de turnos)
+    
     global aux
     aux = procActual
     listaListos.append(procActual)
+
+
+def mover_aColaSuspendido(procActual):
+    #Revisar tiempos para informe final!
+    listaSuspendidos.append(procActual)
+
 
 def mandarTerminados(procActual,indiceMP):
     #Revisar tiempos para informe final!
@@ -567,57 +577,6 @@ def BuscarSRTF() -> Optional[int]:
             return i
     return None
 
-<<<<<<< Updated upstream
-### tenemos que adaptar los nombres de funciones y de campos de valores de los diccionarios de procesos
-
-""" Funciones que usa CARGAR_MPconMS (Agustin e Isabel)"""
-#cabeEnAlgunaParticionLIBRE(proceso)
-#mover_aColaListo(proceso)
-#BestFitCICLO_ADMICION(vGlobal.aux)
-
-def actualizar_proceso_enMemoriaPrincipal(lista: List, particion_actualizada: Dict) -> bool:
-    """Actualiza los campos de una partición en MemoriaPrincipal (por Particion).
-    ════════════════════════════════════════════════════════════════════════
-    FIFO + MEMORIA PRINCIPAL
-    ════════════════════════════════════════════════════════════════════════
-    - Esta función actualiza una partición completa de MP.
-    - Lo que muta aquí son los campos de la partición (Ocupado, Fragmentacion_Interna, etc.)
-      Y el dict "Proceso_alojado" que es una REFERENCIA a un proceso en listaListos.
-
-    - Si modificas particion_actualizada["Proceso_alojado"]["t_RestanteCPU"],
-      eso afecta a AMBOS:
-      a) El proceso en listaListos (que es la misma referencia)
-      b) El dict en MP[i]["Proceso_alojado"]
-    
-    - Esto garantiza que la cola FIFO (listaListos) y la Memoria Principal
-      están siempre sincronizadas.
-    """
-    for p in lista:
-        if p.get("Particion") == particion_actualizada.get("Particion"):
-            p.update(particion_actualizada)
-            return True
-    return False
-
-def cargarProcesoAlojado(memoria: List, puntero: int, proceso_actual: Dict):
-    """
-    Asigna por referencia el dict del proceso a la partición seleccionada.
-    """
-    particion = memoria[puntero]
-    particion["Proceso_alojado"] = proceso_actual
-    particion["Fragmentacion_Interna"] = int(particion["TamañoTotal"] - proceso_actual.get("tamaño", 0))
-    particion["Ocupado"] = True
-    actualizar_proceso_enMemoriaPrincipal(vGlobal.MemoriaPrincipal, particion)
-
-#SuspendidosYListos() ????
-
-def CARGAR_MPconMS():
-    """
-    Carga MP con procesos desde suspendidos hasta tener 3 en listos.
-    Elimina de suspendidos los procesos que ya están en la lista de listos.
-    Usa slice assignment [:] para mantener la referencia al objeto lista original,
-    evitando que otras referencias externas pierdan sincronía.
-=======
->>>>>>> Stashed changes
 
 def QuitarListosDeSuspendidos():
     """
@@ -635,70 +594,10 @@ def CARGAR_MPconMS():
                 mover_aColaListo(ingresa)
                 AsignPartBestFit(aux)
                 cambios = True
-<<<<<<< Updated upstream
-        #SuspendidosYListos() lo voy a poner directamente aca xq es super especifico de esta funcion
-        ids_listos = {p.get("id") for p in vGlobal.listaListos}
-        vGlobal.listaSuspendidos[:] = [p for p in vGlobal.listaSuspendidos if p.get("id") not in ids_listos]
-        if not cambios:
-            break
-
-#Funciones adaptadas que usa ADMICION_MULTI_5 (Agustin e Isabel)
-def  marcar_procesoNuevo_Ingresado(procesoNuevo: Dict):
-    #Marca en listaProcesos que el proceso ya fue ingresado (bandera_baja_logica)
-    for p in vGlobal.listaProcesos:
-        if p.get("id") == procesoNuevo.get("id") and p.get("bandera_baja_logica") is False:
-            p["bandera_baja_logica"] = True
-            break  #return True?
-
-def actualizar_proceso_enLista(lista: List, proceso_actualizado: Dict) -> bool:
-    """ 
-    Actualiza el dicc de un proceso dentro de una lista por ID
-    TRUE = Lo actualizo, FALSE = No lo encontré
-    (!) Si el proceso tambien esta en MP como referencia, la mutacion se propaga automaticamente
-
-    Ejemplo de sincronización automática:
-    - p_listo = listaListos[i] (misma referencia que MP[j]["Proceso_alojado"])
-    - actualizar_proceso_enLista(listaListos, {"id": p_listo["id"], "t_RestanteCPU": 5})
-    - Ahora MP[j]["Proceso_alojado"]["t_RestanteCPU"] también es 5
-    
-    Este es el corazón de cómo FIFO + MemoriaPrincipal se sincronizan sin
-    copias redundantes.
-    """
-    for p in lista:
-        if p.get("id") == proceso_actualizado.get("id"):
-            p.update(proceso_actualizado)
-            return True
-    return False
-
-def mover_aColaSuspendido(proceso_actual:Dict):
-    """
-    Construye el dict necesario y mueve el proceso a la lista de suspendidos.
-    Mantiene referencias correctas usando actualizar_proceso_enLista cuando corresponde.
-    """
-    marcar_procesoNuevo_Ingresado(proceso_actual)
-
-    cargarTiempoRespuesta = int(vGlobal.T_simulador - proceso_actual.get("t_arribo", vGlobal.T_simulador))
-    cargarTiempoIngreso = int(proceso_actual.get("t_ingreso", vGlobal.T_simulador))
-    t_Restante = int(proceso_actual.get("t_RestanteCPU", proceso_actual.get("t_irrupcion", 0)))
-
-    proceso_suspendido = {
-        "id": proceso_actual.get("id"),
-        "t_arribo": proceso_actual.get("t_arribo"),
-        "tamaño": proceso_actual.get("tamaño"),
-        "t_irrupcion": proceso_actual.get("t_irrupcion"),
-        "t_Respuesta": cargarTiempoRespuesta,
-        "t_ingreso": cargarTiempoIngreso,
-        "t_RestanteCPU": t_Restante,
-    }
-    if not actualizar_proceso_enLista(vGlobal.listaSuspendidos, proceso_suspendido):
-        vGlobal.listaSuspendidos.append(proceso_suspendido)
-    
-=======
         QuitarListosDeSuspendidos()
         if not cambios:
             break
 
->>>>>>> Stashed changes
 def ADMICION_MULTI_5():
     """
     Admite procesos manteniendo multiprogramacion <= 5 y hasta 3 procesos en
@@ -737,17 +636,14 @@ def ADMICION_MULTI_5():
     if multiprogramacion >= 5:
         return
 
-    #Planificador mediano plazo (PMP)
     #si listaListos menor a 3 y listaSuspendidos no vacía 
     if len(listaListos) < 3 and listaSuspendidos:
         CARGAR_MPconMS()
 
-    #Planificador largo plazo (PLP)
     while multiprogramacion < 5:
         cambios = False
         for proceso in listaNuevos:
             if proceso.get("bandera_baja_logica") is False and proceso.get("t_arribo") <= T_simulador:
-                #Revisa mandar a Listos
                 if len(listaListos) < 3 and cabeEnAlgunaParticionLIBRE(proceso):
                     mover_aColaListo(proceso)
                     AsignPartBestFit(aux)
@@ -762,26 +658,18 @@ def ADMICION_MULTI_5():
             break #sale del while si no hubo cambios
         else:
             banderaMostrarTablas = True # actualizar tablas en caso de cambios
-<<<<<<< Updated upstream
-    vGlobal.multiprogramacion = len(vGlobal.listaListos) + len(vGlobal.listaSuspendidos)
-
-def cabeEnAlgunaParticion(listaMP,proc):
-    for p in range(len(listaMP)):
-        difTamaño= listaMP[p]["TamañoTotal"] - proc["tamaño"]
-        if ((difTamaño >= 0) and (listaMP[p]["Ocupado"] == False)):
-            return True
-    return False
-=======
     multiprogramacion = len(listaListos) + len(listaSuspendidos)
->>>>>>> Stashed changes
+
 
 # aca agregamos las funciones de ciclos osiosos y la control de multiprogramacion == 0 para adelantar tiempo de simulacion a los intantes de arribos
-
-def CiclosOciosos(proceso_siguiente: Dict):
+def CiclosOciosos(proceso_siguiente: dict):
     """
     Si no hay procesos listos avanza el tiempo del simulador hasta el próximo arribo
     y acumula el tiempo de CPU ocioso.
     """
+    global multiprogramacion
+    global T_Simulacion
+
     # recalcular multiprogramacion
     multiprogramacion = len(listaListos) + len(listaSuspendidos)
 
@@ -833,34 +721,27 @@ def buscarSiguiente():
     """
     # primero pendientes ya arribados pero sin ingresar o el proceso que arribo en este ciclo
     pendiente=None
-    #banderaEncontrado=False
-    for p in listaProcesos:
+    for p in listaNuevos:
         if (p.get("bandera_baja_logica") is False) and (p.get("t_arribo") <= T_simulador):
-            #banderaEncontrado=True
-            pendiente=p
-            #break
-            return pendiente
-        if (p.get("t_arribo") == T_simulador):
             pendiente=p
             return pendiente
-    #if banderaEncontrado==True:
-    #    #print(f"Busqueda del siguiente PROCESO encontro un proceso esperando ingresar |ID: {pendiente["id"]} || T.ARRIBO: {pendiente["t_arribo"]} || TAMAÑO: {pendiente["tamaño"]} || T.IRRUPCION: {pendiente["t_irrupcion"]} |")
-    #    return pendiente
+ 
     # próximo arribo futuro
-    for p in listaProcesos:
+    for p in listaNuevos:
         if (p.get("t_arribo") > T_simulador) and (p.get("bandera_baja_logica") is False):
             #print(f"Busqueda del siguiente encontró un proceso del futuro {p}")
             return p
     return None
 
 def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
+    global banderaMostrarTablas
     if proceso["tiempo_restante"] == 0:
         banderaMostrarTablas = True
         print(f"El proceso {proceso['id']} ha finalizado su ejecución.")
         # Manda a terminados
         mandarTerminados(proceso, indice_procesoEjecucion) # esta funcion tiene que copiar este proceso en la lista de terminados y removerlo de listos
         # Disminuye multiprogramación y se activa planificador de memoria
-        ADMICION_MULTI_5()# Recalcula multiprogramación después de mandar a terminados
+        #ADMICION_MULTI_5()# Recalcula multiprogramación después de mandar a terminados
         return True
 
 ####################################### FUNCIONES GRÁFICAS ######################################
@@ -1083,10 +964,13 @@ ADMICION_MULTI_5()
 
 ############# BUCLE DE EJECUCIÓN #############
 while len(listaTerminados) < len(listaNuevos):
+    
     banderaMostrarTablas = False # bandera para mostrar tablas si hay cambios en admision o terminacion
+    
     #CICLOS OCIOSOS SI NO HAY PROCESOS EN LISTOS
     proceso_siguiente = buscarSiguiente() #esta parte revisa los ciclos osiosos antes de tratar cualquier proceso
     CiclosOciosos(proceso_siguiente)
+    
     # PRIMERO ciclos ociosos para hacer admision de procesos
     # tiempo del simulador parejo con los procesos que van llegando para hacer la admision de ese instante
     ADMICION_MULTI_5()
@@ -1120,6 +1004,8 @@ while len(listaTerminados) < len(listaNuevos):
             indice_procesoEjecucion = BuscarSRTF()
             procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
             print(f"Cambio de contexto: {procesoEjecucion['id']} ingresa a CPU")
+
+        ADMICION_MULTI_5() # revisar si hay admision de nuevos procesos antes del cambio de contexto
         
         # control de APROPIACION de CPU para la admision de nuevos procesos causado por ADMICION_MULTI_5() en la linea 970
         if procMasPrioridad is not None:      
@@ -1130,7 +1016,9 @@ while len(listaTerminados) < len(listaNuevos):
                 # la tabla de CPU se actualiza en la siguiente sección gráfica
         
         if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
+            #Mostrar pantalla
             banderaMostrarTablas = False # resetear bandera para otro ciclo
+            
             #Funciones gráficas de pantalla
         
     ########## FIN EJECUCION #########
