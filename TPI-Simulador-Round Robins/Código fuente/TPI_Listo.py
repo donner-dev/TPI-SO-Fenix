@@ -535,7 +535,6 @@ def BuscarSRTF() -> Optional[int]:
 #cabeEnAlgunaParticionLIBRE(proceso)
 #mover_aColaListo(proceso)
 #BestFitCICLO_ADMICION(vGlobal.aux)
-#cargarProcesoAlojado(vGlobal.MemoriaPrincipal, puntero, vGlobal.aux)
 
 def actualizar_proceso_enMemoriaPrincipal(lista: List, particion_actualizada: Dict) -> bool:
     """Actualiza los campos de una partición en MemoriaPrincipal (por Particion).
@@ -601,7 +600,9 @@ def CARGAR_MPconMS():
                 if puntero is not None:
                     cargarProcesoAlojado(vGlobal.MemoriaPrincipal, puntero, vGlobal.aux)
                 cambios = True
-        SuspendidosYListos()
+        #SuspendidosYListos() lo voy a poner directamente aca xq es super especifico de esta funcion
+        ids_listos = {p.get("id") for p in vGlobal.listaListos}
+        vGlobal.listaSuspendidos[:] = [p for p in vGlobal.listaSuspendidos if p.get("id") not in ids_listos]
         if not cambios:
             break
 
@@ -656,7 +657,6 @@ def mover_aColaSuspendido(proceso_actual:Dict):
     if not actualizar_proceso_enLista(vGlobal.listaSuspendidos, proceso_suspendido):
         vGlobal.listaSuspendidos.append(proceso_suspendido)
     
-
 def ADMICION_MULTI_5():
     """
     Admite procesos manteniendo multiprogramacion <= 5 y hasta 3 procesos en
@@ -717,15 +717,12 @@ def ADMICION_MULTI_5():
             banderaMostrarTablas = True # actualizar tablas en caso de cambios
     vGlobal.multiprogramacion = len(vGlobal.listaListos) + len(vGlobal.listaSuspendidos)
 
-
-
 def cabeEnAlgunaParticion(listaMP,proc):
     for p in range(len(listaMP)):
         difTamaño= listaMP[p]["TamañoTotal"] - proc["tamaño"]
         if ((difTamaño >= 0) and (listaMP[p]["Ocupado"] == False)):
             return True
     return False
-
 
 # aca agregamos las funciones de ciclos osiosos y la control de multiprogramacion == 0 para adelantar tiempo de simulacion a los intantes de arribos
 
