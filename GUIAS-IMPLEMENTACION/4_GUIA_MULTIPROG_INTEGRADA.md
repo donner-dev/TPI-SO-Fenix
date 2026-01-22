@@ -36,7 +36,7 @@ multiprogramacion = len(listaListos) + len(listaSuspendidos)
 #
 # IMPORTANTE - DIFERENCIA CRÍTICA:
 # Procesos NO admitidos se quedan en lista de NUEVOS
-# (no cuentan en multiprog, nunca entraron a MP)
+# (no cuentan en multiprog, nunca entraron a MP ni a MS)
 ```
 
 ---
