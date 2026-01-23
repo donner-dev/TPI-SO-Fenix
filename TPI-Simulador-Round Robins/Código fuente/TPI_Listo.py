@@ -14,7 +14,8 @@ sys.path.append('..')
 """ Importé las funciones de SIMULADOR.py  para tenerlo modulado como se habia discutido (vamos viendo si queda bien o no) """
 import paquetes.LisandroRojas.funcionesLisandro_prolijo as Lis
 import paquetes.AgustinVeron.Menu as MA
-import paquetes.estado_global as import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as FunArchivos
+#import paquetes.estado_global as vGlobal
+import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as FunArchivos
 
 
 
@@ -1099,7 +1100,7 @@ while len(listaTerminados) < len(listaNuevos):
         indice_procMasPrioridad = BuscarSRTF()
         procMasPrioridad = listaMP[indice_procMasPrioridad]["Proceso_alojado"]
         
-        # control de APROPIACION de CPU para la admision de nuevos procesos causado por ADMICION_MULTI_5() en la linea 970
+        # control de APROPIACION de CPU para la admision de nuevos procesos causado por ADMICION_MULTI_5
         if procMasPrioridad is not None:      
             if procMasPrioridad["id"] != procesoEjecucion["id"]:
                 print(f"Cambio de contexto: {procesoEjecucion['id']} sale -> {procMasPrioridad['id']} APROPIA CPU")
