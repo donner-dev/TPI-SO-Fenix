@@ -1,6 +1,7 @@
 ###################################### IMPORTS ######################################
 import csv
 from pathlib import Path
+from typing import Dict
 from rich.console import Console
 from rich.table import Table
 import msvcrt
@@ -439,7 +440,97 @@ def leer_procesos(csv_filename: str):
 
 
 #################################### FUNCIONES DE LA EJECUCIÓN ###################################
+#""" Funciones que usa CARGAR_MPconMS (Agustin e Isabel)"""
+##cabeEnAlgunaParticionLIBRE(proceso)
+##mover_aColaListo(proceso)
+##BestFitCICLO_ADMICION(vGlobal.aux)
+##cargarProcesoAlojado(vGlobal.MemoriaPrincipal, puntero, vGlobal.aux)
+#
+#def actualizar_proceso_enMemoriaPrincipal(lista: List, particion_actualizada: Dict) -> bool:
+#    """Actualiza los campos de una partición en MemoriaPrincipal (por Particion).
+#    ════════════════════════════════════════════════════════════════════════
+#    FIFO + MEMORIA PRINCIPAL
+#    ════════════════════════════════════════════════════════════════════════
+#    - Esta función actualiza una partición completa de MP.
+#    - Lo que muta aquí son los campos de la partición (Ocupado, Fragmentacion_Interna, etc.)
+#      Y el dict "Proceso_alojado" que es una REFERENCIA a un proceso en listaListos.
+#
+#    - Si modificas particion_actualizada["Proceso_alojado"]["t_RestanteCPU"],
+#      eso afecta a AMBOS:
+#      a) El proceso en listaListos (que es la misma referencia)
+#      b) El dict en MP[i]["Proceso_alojado"]
+#    
+#    - Esto garantiza que la cola FIFO (listaListos) y la Memoria Principal
+#      están siempre sincronizadas.
+#    """
+#    for p in lista:
+#        if p.get("Particion") == particion_actualizada.get("Particion"):
+#            p.update(particion_actualizada)
+#            return True
+#    return False
+#
+#def cargarProcesoAlojado(memoria: List, puntero: int, proceso_actual: Dict):
+#    """
+#    Asigna por referencia el dict del proceso a la partición seleccionada.
+#    """
+#    particion = memoria[puntero]
+#    particion["Proceso_alojado"] = proceso_actual
+#    particion["Fragmentacion_Interna"] = int(particion["TamañoTotal"] - proceso_actual.get("tamaño", 0))
+#    particion["Ocupado"] = True
+#    actualizar_proceso_enMemoriaPrincipal(vGlobal.MemoriaPrincipal, particion)
 
+#Funciones adaptadas que usa ADMICION_MULTI_5 (Agustin e Isabel)
+#def  marcar_procesoNuevo_Ingresado(procesoNuevo: Dict):
+#    #Marca en listaProcesos que el proceso ya fue ingresado (bandera_baja_logica)
+#    for p in vGlobal.listaProcesos:
+#        if p.get("id") == procesoNuevo.get("id") and p.get("bandera_baja_logica") is False:
+#            p["bandera_baja_logica"] = True
+#            break  #return True?
+#
+#def actualizar_proceso_enLista(lista: List, proceso_actualizado: Dict) -> bool:
+#    """ 
+#    Actualiza el dicc de un proceso dentro de una lista por ID
+#    TRUE = Lo actualizo, FALSE = No lo encontré
+#    (!) Si el proceso tambien esta en MP como referencia, la mutacion se propaga automaticamente
+#
+#    Ejemplo de sincronización automática:
+#    - p_listo = listaListos[i] (misma referencia que MP[j]["Proceso_alojado"])
+#    - actualizar_proceso_enLista(listaListos, {"id": p_listo["id"], "t_RestanteCPU": 5})
+#    - Ahora MP[j]["Proceso_alojado"]["t_RestanteCPU"] también es 5
+#    
+#    Este es el corazón de cómo FIFO + MemoriaPrincipal se sincronizan sin
+#    copias redundantes.
+#    """
+#    for p in lista:
+#        if p.get("id") == proceso_actualizado.get("id"):
+#            p.update(proceso_actualizado)
+#            return True
+#    return False
+#
+#def mover_aColaSuspendido(proceso_actual:Dict):
+#    """
+#    Construye el dict necesario y mueve el proceso a la lista de suspendidos.
+#    Mantiene referencias correctas usando actualizar_proceso_enLista cuando corresponde.
+#    """
+#    marcar_procesoNuevo_Ingresado(proceso_actual)
+#
+#    cargarTiempoRespuesta = int(vGlobal.T_simulador - proceso_actual.get("t_arribo", vGlobal.T_simulador))
+#    cargarTiempoIngreso = int(proceso_actual.get("t_ingreso", vGlobal.T_simulador))
+#    t_Restante = int(proceso_actual.get("t_RestanteCPU", proceso_actual.get("t_irrupcion", 0)))
+#
+#    proceso_suspendido = {
+#        "id": proceso_actual.get("id"),
+#        "t_arribo": proceso_actual.get("t_arribo"),
+#        "tamaño": proceso_actual.get("tamaño"),
+#        "t_irrupcion": proceso_actual.get("t_irrupcion"),
+#        "t_Respuesta": cargarTiempoRespuesta,
+#        "t_ingreso": cargarTiempoIngreso,
+#        "t_RestanteCPU": t_Restante,
+#    }
+#    if not actualizar_proceso_enLista(vGlobal.listaSuspendidos, proceso_suspendido):
+#        vGlobal.listaSuspendidos.append(proceso_suspendido)
+#        
+#+=====================
 def MPllena():
     for p in range(len(listaMP)):
         if listaMP[p]["Ocupado"] == False:
@@ -560,6 +651,7 @@ def BuscarSRTF() -> Optional[int]:
     procesoElegido = None
     for proc in listaListos:
         tr = proc.get("t_RestanteCPU", 0)
+        proc["CPU"] = False  #marcar que no está en CPU
         if tr > 0 and tr < menorTR:
             menorTR = tr
             procesoElegido = proc
@@ -568,20 +660,13 @@ def BuscarSRTF() -> Optional[int]:
         return None
 
     #El proceso encontrado en listaListos, ahora busca su índice en memoria
+    procesoElegido["CPU"] = True  #marcar que está en CPU
     proceso_id = procesoElegido.get("id")
     for i, particion in enumerate(listaMP):
         proc_alojado = particion.get("Proceso_alojado")
         if proc_alojado and proc_alojado.get("id") == proceso_id:
             return i
     return None
-
-
-def QuitarListosDeSuspendidos():
-    """
-    Elimina de suspendidos los procesos que ya están en la lista de listos.
-    """
-    ids_listos = {p.get("id") for p in listaListos}
-    listaSuspendidos[:] = [p for p in listaSuspendidos if p.get("id") not in ids_listos]
 
 
 def CARGAR_MPconMS():
@@ -592,7 +677,10 @@ def CARGAR_MPconMS():
                 mover_aColaListo(ingresa)
                 AsignPartBestFit(aux)
                 cambios = True
-        QuitarListosDeSuspendidos()
+        #QuitarListosDeSuspendidos() lo voy a poner directamente aca xq es super especifico de esta funcion
+        ids_listos = {p.get("id") for p in listaListos}
+        listaSuspendidos[:] = [p for p in listaSuspendidos if p.get("id") not in ids_listos]
+
         if not cambios:
             break
 
@@ -628,7 +716,7 @@ def ADMICION_MULTI_5():
       es la MISMA REFERENCIA.
     """
     global multiprogramacion
-
+    global banderaMostrarTablas
     #verif. si la suma de procesos en el ámbito de mpg es >=5
     multiprogramacion = len(listaListos) + len(listaSuspendidos)
     if multiprogramacion >= 5:
