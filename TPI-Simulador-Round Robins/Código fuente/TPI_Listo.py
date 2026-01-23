@@ -336,7 +336,6 @@ def carga_manual_procesos():
                 "t_finalizacion":0,
                 "t_retorno": 0,
                 "total_retorno": 0,
-                "t_espera": 0,
                 "t_ingreso": 0,
                 "t_respuesta": 0,
                 "t_totalenColaListo": 0,
@@ -414,7 +413,6 @@ def leer_procesos(csv_filename: str):
                     "t_finalizacion": 0,
                     "t_retorno": 0,
                     "total_retorno": None,
-                    "t_espera": 0,
                     "t_ingreso": None,
                     "t_respuesta": None,
                     "t_totalenColaListo": 0,
@@ -740,8 +738,6 @@ def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
         print(f"El proceso {proceso['id']} ha finalizado su ejecución.")
         # Manda a terminados
         mandarTerminados(proceso, indice_procesoEjecucion) # esta funcion tiene que copiar este proceso en la lista de terminados y removerlo de listos
-        # Disminuye multiprogramación y se activa planificador de memoria
-        #ADMICION_MULTI_5()# Recalcula multiprogramación después de mandar a terminados
         return True
 
 ####################################### FUNCIONES GRÁFICAS ######################################
@@ -868,7 +864,7 @@ def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
 #    global T_Simulacion
 #
 #    for i in range(len(listaTerminados)):
-#        Sumatoria_TEspera= listaTerminados[i]["t_espera"] + Sumatoria_TEspera
+#        Sumatoria_TEspera= listaTerminados[i][""] + Sumatoria_TEspera
 #        Sumatoria_TRetorno= listaTerminados[i]["t_retorno"] + Sumatoria_TRetorno
 #    
 #
@@ -903,7 +899,7 @@ def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
 #            str(listaTerminados[i]["id"]),
 #            str(listaTerminados[i]["t_arribo"]),
 #            str(listaTerminados[i]["t_irrupcion"]),
-#            str(listaTerminados[i]["t_espera"]),
+#            str(listaTerminados[i][""]),
 #            str(listaTerminados[i]["t_retorno"])),
 #
 #    # Mostrar tabla
@@ -958,54 +954,62 @@ def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
 #    listaNuevos= carga_manual_procesos()
 #    
 
-#############(1)#############
-##Admisión principal
-ADMICION_MULTI_5()
 
 ############# BUCLE DE EJECUCIÓN #############
 while len(listaTerminados) < len(listaNuevos):
     
     banderaMostrarTablas = False # bandera para mostrar tablas si hay cambios en admision o terminacion
+    procesoEjecucion = None
     
     #CICLOS OCIOSOS SI NO HAY PROCESOS EN LISTOS
     proceso_siguiente = buscarSiguiente() #esta parte revisa los ciclos osiosos antes de tratar cualquier proceso
     CiclosOciosos(proceso_siguiente)
     
-    # PRIMERO ciclos ociosos para hacer admision de procesos
+    # PRIMERO: ciclos ociosos para hacer admision de procesos
     # tiempo del simulador parejo con los procesos que van llegando para hacer la admision de ese instante
+    
     ADMICION_MULTI_5()
+
     ########## EJECUCION #########
     #SEGUNDO buscar el proceso SRTF
     indice_procesoEjecucion = BuscarSRTF() # retorna el indice de la particion en memoria principal que contiene el proceso con menor tiempo restante
-    procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
-    if procesoEjecucion is None:
+    
+    if indice_procesoEjecucion is None:
         continue # vuelve al while mayor para un ciclo ocioso
+
+    procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
+
     while (procesoEjecucion is not None) and (procesoEjecucion["tiempo_restante"] > 0):
+        
         banderaMostrarTablas = False # bandera para mostrar tablas si hay cambios en admision o terminacion
+        
         # Ejecutar un ciclo de CPU
         procesoEjecucion["tiempo_restante"] -= 1
         T_simulador += 1
+        
         # Sumar tiempo de espera a los demas procesos en listaListos ya cargados para este ciclo
         for otrosProcesos in listaListos:
             if otrosProcesos["id"] != procesoEjecucion["id"]:
-                otrosProcesos["t_espera"] += 1
+                otrosProcesos["t_totalenColaListo"] += 1
+        
         # Verificar si llegó un nuevo proceso para admisión
         ADMICION_MULTI_5() #acomoda memoria si es necesario y luego termina de admitir
-        indice_procMasPrioridad = BuscarSRTF()
-        procMasPrioridad = listaMP[indice_procMasPrioridad]["Proceso_alojado"]
-        
+
         #revisa si el proceso en ejecucion ha terminado
-        if detectar_terminacion(procesoEjecucion, indice_procesoEjecucion):#la termianacion del proceso en ejecucion ya usa ADMICION_MULTI_5()
+        if detectar_terminacion(procesoEjecucion, indice_procesoEjecucion):
+            #detectar_terminacion manda el proceso a terminados, y quita de la cola de listos y libera la partición disponiendola (ocupado = falso)
             procesoEjecucion = None
                 
-        # Manejo de cambio de contexto
+        # Manejo de cambio de contexto (cuando termina un proceso, busca otro para ejecutar)
         if (len(listaListos) > 0) and (procesoEjecucion is None):
             print(f"Cambio de contexto al siguiente proceso SRTF.")
             indice_procesoEjecucion = BuscarSRTF()
             procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
             print(f"Cambio de contexto: {procesoEjecucion['id']} ingresa a CPU")
 
-        ADMICION_MULTI_5() # revisar si hay admision de nuevos procesos antes del cambio de contexto
+        ADMICION_MULTI_5() # revisar si hay admision de nuevos procesos después del cambio de contexto para ocupar el espacio liberado
+        indice_procMasPrioridad = BuscarSRTF()
+        procMasPrioridad = listaMP[indice_procMasPrioridad]["Proceso_alojado"]
         
         # control de APROPIACION de CPU para la admision de nuevos procesos causado por ADMICION_MULTI_5() en la linea 970
         if procMasPrioridad is not None:      
@@ -1034,7 +1038,7 @@ while len(listaTerminados) < len(listaNuevos):
 #    resProceso["t_inicio"] = T_Simulacion
 #
 #    # Calcular tiempo de espera
-#    resProceso["t_espera"] = resProceso["t_inicio"] - resProceso["t_arribo"]
+#    resProceso[""] = resProceso["t_inicio"] - resProceso["t_arribo"]
 #
 #    # Avanzar tiempo de simulación hasta que termine
 #    T_Simulacion += resProceso["tiempo_restante"]
