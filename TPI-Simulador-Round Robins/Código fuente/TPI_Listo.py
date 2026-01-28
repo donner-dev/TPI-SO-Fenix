@@ -15,12 +15,14 @@ sys.path.append('..')
 import paquetes.LisandroRojas.funcionesLisandro_prolijo as Lis
 import paquetes.AgustinVeron.Menu as MA
 import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as FunArchivos
+
 #import paquetes.estado_global as vGlobal
 
 ###################################### VARIABLES GLOBALES ######################################
 listaNuevos=[]
 listaSuspendidos=[]
 listaListos=[]
+
 
 listaMP=[
     {
@@ -52,7 +54,7 @@ listaMP=[
     },
 ]
 listaTerminados=[]
-listaSuspendidos = []  ### * 
+listaSuspendidos = []  ### * listaSuspendidos = []  ### * 
 T_Simulacion=0
 cantProcesosRestantes=0
 multiprogramacion=0
