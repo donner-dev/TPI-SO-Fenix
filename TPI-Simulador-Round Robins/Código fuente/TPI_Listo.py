@@ -630,14 +630,14 @@ def BuscarSRTF() -> Optional[int]:
     ════════════════════════════════════════════════════════════════════════
     
     Flujo esperado (referencias):
-    1. mover_aColaListo(proceso) → vGlobal.aux = proceso_listo (referencia a
+    1. mover_aColaListo(proceso) → aux = proceso_listo (referencia a
        dict en listaListos)
-    2. cargarProcesoAlojado(MP, puntero, vGlobal.aux) → MP[puntero]["Proceso_alojado"]
-       = vGlobal.aux (MISMA REFERENCIA)
+    2. cargarProcesoAlojado(MP, puntero, aux) → MP[puntero]["Proceso_alojado"]
+       = aux (MISMA REFERENCIA)
     3. En ejecutarTodo(): proceso_actual["t_RestanteCPU"] -= 1 (modifica ambos:
        listaListos Y MemoriaPrincipal simultáneamente porque son la misma referencia)
     4. BuscarSRTF() busca por 'id' en listaListos, encuentra el proceso con menor
-       t_RestanteCPU, y retorna el índice de su partición en MemoriaPrincipal.
+       t_RestanteCPU, a ese proceso lo marca como en CPU colocando en TRUE el campo CPU que actua como bandera, y retorna el índice de su partición en MemoriaPrincipal.
     
     Esto es el puente entre:
     - FIFO (cola de admisión en listaListos)
