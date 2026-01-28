@@ -14,16 +14,14 @@ sys.path.append('..')
 """ Importé las funciones de SIMULADOR.py  para tenerlo modulado como se habia discutido (vamos viendo si queda bien o no) """
 import paquetes.LisandroRojas.funcionesLisandro_prolijo as Lis
 import paquetes.AgustinVeron.Menu as MA
-#import paquetes.estado_global as vGlobal
 import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as FunArchivos
-
-
-
+#import paquetes.estado_global as vGlobal
 
 ###################################### VARIABLES GLOBALES ######################################
 listaNuevos=[]
 listaSuspendidos=[]
 listaListos=[]
+
 listaMP=[
     {
         "Particion": 1,
@@ -54,7 +52,7 @@ listaMP=[
     },
 ]
 listaTerminados=[]
-
+listaSuspendidos = []  ### * 
 T_Simulacion=0
 cantProcesosRestantes=0
 multiprogramacion=0
@@ -213,9 +211,6 @@ def mostrar_menu():
     gotoxy(xMaxPantalla,yMaxPantalla+2)
 
 
-
-
-""" Esto no me esta andando cuando lo uso :( Para revisar con los otros  -Donner """
 #Desplazamiento y selección en el menú principal
 def selec_opcion_menu1():
     # Siempre devuelve la primera opción (0 + 1 = 1)
@@ -233,7 +228,6 @@ def selec_opcion_menu1():
 
     # Devuelve siempre 1
     return 1
-
 
 #Desplazamiento y selección del menú para cargar procesos
 def selec_opcion_menu2():
@@ -290,7 +284,6 @@ def selec_opcion_menu2():
        
     return pos_puntero + 1 # Devuelve 1, 2, o 3 (el número de opción)
 
-""" REVISAR si no cambiamos por la otra funcion.  - Donner """
 def carga_manual_procesos(): 
     limpiar_pantalla()
     global cantProcesosRestantes
@@ -757,6 +750,45 @@ def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
         # Manda a terminados
         mandarTerminados(proceso, indice_procesoEjecucion) # esta funcion tiene que copiar este proceso en la lista de terminados y removerlo de listos
         return True
+
+
+################################# FUNCIONES MOSTRARTABLAS ################################
+def mostrarColaListos():  #ezequiel
+    """ Muestra la tabla de procesos en lista de listos """
+    
+def mostrarCPU():  #ezequiel
+    """ Muestra la tabla de procesos en CPU """
+
+def mostrarMemoriaPrincipal():  #isabel
+    """ Muestra la tabla de particiones de memoria principal """
+
+def mostrarColaSuspendidos():  #isabel
+    console = Console()
+    table = Table(title=" [ Procesos en Memoria Secundaria --> Estado: 'Listo y Suspendido' ]", show_lines=True)
+    headers = ["ID Proceso", "Tiempo Arribo", "Tamaño", "Tiempo Irrupcion", "Tiempo de Respuesta", "Tiempo de Ingreso", "Tiempo Restante de CPU"]
+    for h in headers:
+        table.add_column(h, justify="right")
+    if listaSuspendidos:
+        for p in listaSuspendidos:
+            table.add_row(*(str(p.get(k, "xxx")) for k in ["id", "t_arribo", "tamaño", "t_irrupcion", "t_Respuesta", "t_ingreso", "t_RestanteCPU"]))
+    else:
+        table.add_row(*["xxx"] * len(headers))
+    console.print(table)
+
+def mostrarTerminados(): #agustin
+    """ Muestra la tabla de procesos terminados """
+
+
+
+####################################### FUNCIONES GRÁFICAS ######################################
+#        borradisimo
+
+
+
+
+
+
+
 
 
 ############# BUCLE DE EJECUCIÓN #############
