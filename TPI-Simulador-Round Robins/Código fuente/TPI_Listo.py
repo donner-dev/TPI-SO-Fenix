@@ -829,7 +829,8 @@ def mostrarTerminados(): #agustin
 def mostrarInforme(): #agustin
     """ Muestra la tabla de procesos terminados con el informe final """
     global T_Simulacion
-    
+    global Sumatoria_TEspera
+    global Sumatoria_TRetorno
     console = Console()
     table = Table(title="Procesos Terminados", show_lines=True)
 
@@ -928,17 +929,18 @@ while len(listaTerminados) < len(listaNuevos):
 
         ADMICION_MULTI_5() # revisar si hay admision de nuevos procesos después del cambio de contexto para ocupar el espacio liberado
         indice_procMasPrioridad = BuscarSRTF()
-        if indice_procMasPrioridad is None:
-            continue # vuelve al while mayor para un ciclo ocioso
-        procMasPrioridad = listaMP[indice_procMasPrioridad]["Proceso_alojado"]
         
         # control de APROPIACION de CPU para la admision de nuevos procesos causado por ADMICION_MULTI_5
-        if procMasPrioridad is not None:      
-            if procMasPrioridad["id"] != procesoEjecucion["id"]:
-                print(f"Cambio de contexto: {procesoEjecucion['id']} sale -> {procMasPrioridad['id']} APROPIA CPU")
-                procesoEjecucion = procMasPrioridad
-                indice_procesoEjecucion = indice_procMasPrioridad
-                # la tabla de CPU se actualiza en la siguiente sección gráfica
+        if indice_procMasPrioridad is not None and procesoEjecucion is not None:     
+            procMasPrioridad = listaMP[indice_procMasPrioridad]["Proceso_alojado"]
+            
+            # Validar que procMasPrioridad no sea dict vacío
+            if procMasPrioridad and procMasPrioridad.get("id") is not None:
+                if procMasPrioridad.get("id") != procesoEjecucion.get("id"):
+                    print(f"Cambio de contexto: {procesoEjecucion['id']} sale -> {procMasPrioridad['id']} APROPIA CPU")
+                    procesoEjecucion = procMasPrioridad
+                    indice_procesoEjecucion = indice_procMasPrioridad
+                    # la tabla de CPU se actualiza en la siguiente sección gráfica
         
         if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
             #Mostrar pantalla poner todas las tablas.
