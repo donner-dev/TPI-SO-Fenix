@@ -152,9 +152,16 @@ def seleccionarCSV():
     archivos_csv = [a for a in archivos if a.lower().endswith(".csv")]
 
     if not archivos_csv:
+        gotoxy(20,22)
         print("No se encontraron archivos CSV en el directorio.")
+        gotoxy(10,23)
+        print("Coloque un archivo .csv en el directorio y vuelva a abrir el programa.")
         msvcrt.getch()
         return None
+
+    console = Console()
+    gotoxy(34,20)
+    console.print(f"[bold italic grey70]Seleccione un archivo...[/bold italic grey70]")
 
     #Mostrar instrucciones
     mensajeOp = "Use las flechas (⬆︎ ⬇︎) y presione (Enter)"
@@ -262,7 +269,7 @@ def leer_procesos(csv_filename: str):
 
 def ejecutarMenu():
     global listaNuevos
-    console = Console()
+    
 
     #Bordes y texto 
     limpiar_pantalla()
@@ -275,15 +282,14 @@ def ejecutarMenu():
                 gotoxy(x,y)
                 print("▓", end="")
     mostrar_logo2()
-    gotoxy(34,20)
-    console.print(f"[bold italic grey70]Seleccione un archivo...[/bold italic grey70]")
+
 
     #Carga de archivo CSV
     nombreArchivoCSV = seleccionarCSV()
     listaNuevos = leer_procesos(nombreArchivoCSV)
     limpiar_pantalla()
 
-############################## FUNCIONES PARA LA EJECUCIÓN ######################################
+################################ FUNCIONES PARA LA EJECUCIÓN ####################################
 
 def MPllena():
     for p in range(len(listaMP)):
@@ -310,13 +316,12 @@ def AsignPartBestFit(procActual):
 
 def cabeEnAlgunaParticionLIBRE(proc):
     global listaMP
-    
+
     for p in range(len(listaMP)):
         difTamaño= listaMP[p]["TamañoTotal"] - proc["tamaño"]
         if ((difTamaño >= 0) and (listaMP[p]["Ocupado"] == False)):
             return True
     return False
-
 
 def mover_aColaListo(procActual):
     global T_Simulacion
