@@ -51,14 +51,9 @@ listaMP=[
     },
 ]
 listaTerminados=[]
-<<<<<<< Updated upstream
 listaSuspendidos = []  
 T_Simulacion=-1
 T_CPU_ocioso=0         #Empieza en -1 para que siempre se haga un incremento en el primer ciclo.
-=======
-T_Simulacion=0
-T_CPU_ocioso=0
->>>>>>> Stashed changes
 cantProcesosRestantes=0
 multiprogramacion=0
 aux=None
@@ -924,7 +919,7 @@ while len(listaTerminados) < len(listaNuevos):
             print(f"Cambio de contexto al siguiente proceso SRTF.")
             indice_procesoEjecucion = BuscarSRTF()
             if indice_procesoEjecucion is None:
-                break # vuelve al while mayor para un ciclo ocioso
+                continue # vuelve al while mayor para un ciclo ocioso
             procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
             print(f"Cambio de contexto: {procesoEjecucion['id']} ingresa a CPU")
 
@@ -933,6 +928,8 @@ while len(listaTerminados) < len(listaNuevos):
 
         ADMICION_MULTI_5() # revisar si hay admision de nuevos procesos después del cambio de contexto para ocupar el espacio liberado
         indice_procMasPrioridad = BuscarSRTF()
+        if indice_procMasPrioridad is None:
+            continue # vuelve al while mayor para un ciclo ocioso
         procMasPrioridad = listaMP[indice_procMasPrioridad]["Proceso_alojado"]
         
         # control de APROPIACION de CPU para la admision de nuevos procesos causado por ADMICION_MULTI_5
@@ -946,6 +943,11 @@ while len(listaTerminados) < len(listaNuevos):
         if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
             #Mostrar pantalla poner todas las tablas.
             banderaMostrarTablas = False # resetear bandera para otro ciclo
-            
+            MostrarTablas()
+            print(f"Tiempo de simulación actual: >>>>>>>>>>>>>>>> {T_Simulacion} (ut) <<<<<<<<<<<<<<<<")
+            print(f"Multiprogramación actual: >>>>>>>>>>>>>>>> {multiprogramacion} procesos <<<<<<<<<<<<<<<<")
+            print(f"presione cualquier tecla para continuar...")
+            msvcrt.getch()  # espera cualquier tecla
+            limpiar_pantalla()
     #Informe final al terminar la simulación
     mostrarInforme()
