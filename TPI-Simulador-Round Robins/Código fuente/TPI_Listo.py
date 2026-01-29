@@ -1,4 +1,4 @@
-###################################### IMPORTS ######################################
+############################################ IMPORTS ############################################
 import csv
 from pathlib import Path
 from typing import Dict
@@ -10,20 +10,17 @@ import sys
 import os
 sys.path.append('..')
 
-
 """ Importé las funciones de SIMULADOR.py  para tenerlo modulado como se habia discutido (vamos viendo si queda bien o no) """
-import paquetes.LisandroRojas.funcionesLisandro_prolijo as Lis
-import paquetes.AgustinVeron.Menu as MA
-import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as FunArchivos
-
+#import paquetes.LisandroRojas.funcionesLisandro_prolijo as Lis
+#import paquetes.AgustinVeron.Menu as MA
+#import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as FunArchivos
 #import paquetes.estado_global as vGlobal
+
 
 ###################################### VARIABLES GLOBALES ######################################
 listaNuevos=[]
 listaSuspendidos=[]
 listaListos=[]
-
-
 listaMP=[
     {
         "Particion": 1,
@@ -54,21 +51,20 @@ listaMP=[
     },
 ]
 listaTerminados=[]
-listaSuspendidos = []  ### * listaSuspendidos = []  ### * 
+listaSuspendidos = []  
 T_Simulacion=0
 cantProcesosRestantes=0
 multiprogramacion=0
 aux=None
 banderaMostrarTablas=False
 
-#variables de cálculo:
+#variables de cálculo estadístico:
 Sumatoria_TRetorno= 0
 Sumatoria_TEspera= 0
 
-paso1=None
-paso2=None
+############################### FUNCIONES PARA EL MENÚ ######################################
+#Algunas de las funciones de esta sección también se usan durante la ejecución del simulador.
 
-###################################### MENÚ ######################################
 """ Podemos revisar en donde van las funciones del menú, si acá o en otro archivo aparte?  mas que nada lo del render de logo- Donner """
 #Dimensiones de pantalla
 xMaxPantalla = 90
@@ -78,10 +74,10 @@ pos_opciones = (yMaxPantalla//2)+12
 pos_opciones2 = (yMaxPantalla//2)+6
 #Colores para strings
 NEGRITA = "\033[1m"
-AZUL="\033[44m" 
+AZUL="\033[34m"
 ROJO="\033[41m" 
 VERDE="\033[42m"
-AMARILLO="\033[43m"
+AMARILLO="\033[33m"
 NEGRO="\033[30m"
 BLANCO="\033[47m"
 RESET = "\033[0m"
@@ -110,56 +106,6 @@ def read_single_key_windows():
 def limpiar_buffer_entrada():
     while msvcrt.kbhit():
         msvcrt.getch()
-
-#Logo del engranaje
-def mostrar_logo():
-    '''
-    ---por cada linea---
-    Asigno string
-    Me posiciono; imprimo
-    '''
-    mensajeOp = "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)-1,3); print(mensajeOp)
-    mensajeOp = f"░{ROJO}++++++++++++++++++++{RESET}{NEGRO}%#{RESET}{VERDE}++++++++++++++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+13,4); print(mensajeOp)
-    mensajeOp = f"░{ROJO}++++++++++++++++++++{RESET}{NEGRO}%#{RESET}{VERDE}++++++++++++++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+13,5); print(mensajeOp)
-    mensajeOp = f"░{ROJO}+++++++++++++++++{RESET}{NEGRO}%*:{RESET}{BLANCO}..{RESET}{NEGRO}-%#{RESET}{VERDE}+++++++++++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,6); print(mensajeOp)
-    mensajeOp = f"░{ROJO}+++++++++{RESET}{NEGRO}%%%#+++*%{RESET}{BLANCO}.....{RESET}{NEGRO}*%++++%%%*{RESET}{VERDE}+++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,7); print(mensajeOp)
-    mensajeOp = f"░{ROJO}+++++++{RESET}{NEGRO}%%:{RESET}{BLANCO}...{RESET}{NEGRO}%%={RESET}{BLANCO}..........{RESET}{NEGRO}%%*{RESET}{BLANCO}...{RESET}{NEGRO}#%*{RESET}{VERDE}+++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,8); print(mensajeOp)
-    mensajeOp = f"░{ROJO}++++++{RESET}{NEGRO}%%{RESET}{BLANCO}.........................{RESET}{NEGRO}*%{RESET}{VERDE}+++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,9); print(mensajeOp)
-    mensajeOp = f"░{ROJO}++++++++{RESET}{NEGRO}%#{RESET}{BLANCO}......{RESET}{NEGRO}:%%%%%%%+{RESET}{BLANCO}.......{RESET}{NEGRO}%#{RESET}{VERDE}++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+31,10); print(mensajeOp)
-    mensajeOp = f"░{ROJO}+++++++{RESET}{NEGRO}%%{RESET}{BLANCO}.....{RESET}{NEGRO}#%*{RESET}{AZUL}++++++++{RESET}{NEGRO}%%:{RESET}{BLANCO}....{RESET}{NEGRO}=%{RESET}{VERDE}++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,11); print(mensajeOp)
-    mensajeOp = f"░{ROJO}+++{RESET}{NEGRO}%%%*={RESET}{BLANCO}.....{RESET}{NEGRO}%%{RESET}{AZUL}++++++++++++{RESET}{NEGRO}%:{RESET}{BLANCO}....{RESET}{NEGRO}:=#%%{RESET}{VERDE}++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,12); print(mensajeOp)
-    mensajeOp = f"░{NEGRO}%%%%#{RESET}{BLANCO}.......{RESET}{NEGRO}:%{RESET}{AZUL}+++++++++++++{RESET}{NEGRO}%%{RESET}{BLANCO}........{RESET}{NEGRO}%%%%%{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+31,13); print(mensajeOp)
-    mensajeOp = f"░{AZUL}+++{RESET}{NEGRO}%%{RESET}{BLANCO}........{RESET}{NEGRO}%*{RESET}{AZUL}++++++++++++{RESET}{NEGRO}%#{RESET}{BLANCO}........{RESET}{NEGRO}%{RESET}{AMARILLO}+---{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,14); print(mensajeOp)
-    mensajeOp = f"░{AZUL}+++++{RESET}{NEGRO}*#%#{RESET}{BLANCO}....{RESET}{NEGRO}:%#{RESET}{AZUL}++++++++++{RESET}{NEGRO}%%{RESET}{BLANCO}.....{RESET}{NEGRO}%%#{RESET}{AMARILLO}+-----{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,15); print(mensajeOp)
-    mensajeOp = f"░{AZUL}++++++++{RESET}{NEGRO}%%{RESET}{BLANCO}.....{RESET}{NEGRO}-%%#+++*%%#{RESET}{BLANCO}.....{RESET}{NEGRO}:%{RESET}{AMARILLO}+--------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+31,16); print(mensajeOp)
-    mensajeOp = f"░{AZUL}+++++++{RESET}{NEGRO}%#{RESET}{BLANCO}.......................{RESET}{NEGRO}:%%{RESET}{AMARILLO}-------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,17); print(mensajeOp)
-    mensajeOp = f"░{AZUL}++++++{RESET}{NEGRO}*%#{RESET}{BLANCO}....{RESET}{NEGRO}-:{RESET}{BLANCO}...........{RESET}{NEGRO}.+{RESET}{BLANCO}....{RESET}{NEGRO}:%%{RESET}{AMARILLO}-------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,18); print(mensajeOp)
-    mensajeOp = f"░{AZUL}++++++++{RESET}{NEGRO}*%%%%*+%%%{RESET}{BLANCO}.....={RESET}{NEGRO}%%*=%%#%%{RESET}{AMARILLO}---------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,19); print(mensajeOp)
-    mensajeOp = f"░{AZUL}+++++++++++++++++{RESET}{NEGRO}%-{RESET}{BLANCO}....{RESET}{NEGRO}%%{RESET}{AMARILLO}-----------------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,20); print(mensajeOp)
-    mensajeOp = f"░{AZUL}+++++++++++++++++{RESET}{NEGRO}*%%%%%%{RESET}{AMARILLO}------------------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+13,21); print(mensajeOp)
-    mensajeOp = f"░{AZUL}++++++++++++++++++++{RESET}{NEGRO}%*{RESET}{AMARILLO}--------------------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+13,22); print(mensajeOp)
-    mensajeOp = "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)-1,23); print(mensajeOp)
 
 #Logo de la carpeta
 def mostrar_logo2():
@@ -194,184 +140,65 @@ def mostrar_logo2():
     gotoxy(((xMaxPantalla-len(mensajeOp))//2),18); print(mensajeOp)
 
 
-def mostrar_menu():
-    mostrar_logo()
-    mensajeOp = f"{NEGRITA}SIMULADOR DE GESTIÓN Y PLANIFICACIÓN DE PROCESOS{RESET}"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+4,(yMaxPantalla//2)+8)
-    print(mensajeOp)
-    mensajeOp = "Presione una tecla para iniciar la simulación:"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2),(yMaxPantalla//2)+10)
-    print(mensajeOp)
-    mensajeOp = "Iniciar Simulacion"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2),pos_opciones)
-    print("\033[1;4;36m" + mensajeOp + "\033[0m")
-    gotoxy(3,yMaxPantalla-2)
-    print("V1.0 - ROUND ROBINS",end="")
-    gotoxy(xMaxPantalla-12,yMaxPantalla-2)
-    print("U.T.N FRRe",end="")
-    #posicion del puntero en la posicion maxima en x e y para dibujar toda la pantalla
-    gotoxy(xMaxPantalla,yMaxPantalla+2)
-
-
-#Desplazamiento y selección en el menú principal
-def selec_opcion_menu1():
-    # Siempre devuelve la primera opción (0 + 1 = 1)
-    X_PUNTERO = ((xMaxPantalla // 2) - 11)  
-
-    # Dibujar directamente el puntero en la primera opción
-    gotoxy(X_PUNTERO, pos_opciones)
-    print("▶")
-
-    # Esperar a que se presione Enter
-    while True:
-        tecla = read_single_key_windows()
-        if tecla == TECLA_ENTER:
-            break
-
-    # Devuelve siempre 1
-    return 1
-
-#Desplazamiento y selección del menú para cargar procesos
-def selec_opcion_menu2():
-    limpiar_pantalla()
-    mostrar_logo2()
-    for y in range(1, yMaxPantalla):
-        for x in range(1, xMaxPantalla):
-            if (x == 1) or (x == xMaxPantalla-1):
-                gotoxy(x,y)
-                print("▓", end="")
-            if (y == 1) or (y == yMaxPantalla-1):
-                gotoxy(x,y)
-                print("▓", end="")
+def seleccionarCSV():
+    global AZUL
+    global AMARILLO
+    global RESET
     
+    #Obtiene los archivos CSV
+    directorio_actual = os.path.dirname(os.path.abspath(__file__))
+    archivos = os.listdir(directorio_actual)
+    archivos_csv = [a for a in archivos if a.lower().endswith(".csv")]
+
+    if not archivos_csv:
+        print("No se encontraron archivos CSV en el directorio.")
+        msvcrt.getch()
+        return None
+
+    #Mostrar instrucciones
     mensajeOp = "Use las flechas (⬆︎ ⬇︎) y presione (Enter)"
-    gotoxy((xMaxPantalla-len(mensajeOp))//2+2,yMaxPantalla//2+4)
+    gotoxy((xMaxPantalla-len(mensajeOp))//2+1, yMaxPantalla//2+5)
     print(mensajeOp)
-    mensajeOp = "(1)-Cargar procesos mediante archivo (.csv)"
-    gotoxy((xMaxPantalla-len(mensajeOp))//2,yMaxPantalla//2+6)
-    print(mensajeOp)
-    mensajeOp = "(2)-Carga manual de procesos"
-    gotoxy((xMaxPantalla-len(mensajeOp))//2,yMaxPantalla//2+7)
-    print(mensajeOp)
-    # El índice de la opción seleccionada (0: Archivo, 1: Manual)
+
+    #Mostrar lista de archivos CSV
+    pos_opciones = yMaxPantalla//2+6
+    for i, archivo in enumerate(archivos_csv, start=1):
+        gotoxy(37, pos_opciones+i)
+        print(f"{AZUL}{i}. {AMARILLO}{archivo}{RESET}")
+
+    # Inicializar puntero
     pos_puntero = 0
     tecla = ''
-    NUM_OPCIONES = 2 
-    X_PUNTERO = (xMaxPantalla // 2) - 24 
+    NUM_OPCIONES = len(archivos_csv)
+    X_PUNTERO = (xMaxPantalla // 2) - 30  # Ajustá según tu diseño
+
     while True:
-        # 1) Borrar el puntero de la posición anterior
         pos_puntero_ant = pos_puntero
-        # 2) Lectura de tecla (Espera activa por un input)
         tecla = read_single_key_windows()
-        # 3) Lógica de movimiento (Solo se ejecuta si se presionó una tecla válida)
+
         if tecla == TECLA_ARRIBA:
             pos_puntero = (pos_puntero - 1) % NUM_OPCIONES
         elif tecla == TECLA_ABAJO:
             pos_puntero = (pos_puntero + 1) % NUM_OPCIONES
         elif tecla == TECLA_ENTER:
-            # Sale del bucle cuando se presiona Enter
-            break 
-        # 4. Redibujar Puntero (Solo si la posición cambió o si se leyó una tecla)
+            # Cuando se presiona Enter, se devuelve el nombre del archivo seleccionado
+            return archivos_csv[pos_puntero]
+
         if tecla:
-            # Borrar puntero antiguo: Imprimir un espacio ' ' en la posición vertical anterior.
-            gotoxy(X_PUNTERO, pos_opciones2 + pos_puntero_ant)
-            print(" ", end="", flush=True) 
-            # Dibujar puntero nuevo: Imprimir la flecha '▶' en la nueva posición.
-            gotoxy(X_PUNTERO, pos_opciones2 + pos_puntero)
+            # Borrar puntero anterior
+            gotoxy(X_PUNTERO, pos_opciones + pos_puntero_ant + 1)
+            print(" ", end="", flush=True)
+            # Dibujar puntero nuevo
+            gotoxy(X_PUNTERO, pos_opciones + pos_puntero + 1)
             print("▶", end="", flush=True)
-        # importante: Mover el cursor al final de la pantalla después de redibujar
-        # para que el próximo "print" del sistema operativo no arruine el menú.
+
         gotoxy(xMaxPantalla, yMaxPantalla + 2)
-
-       
-    return pos_puntero + 1 # Devuelve 1, 2, o 3 (el número de opción)
-
-def carga_manual_procesos(): 
-    limpiar_pantalla()
-    global cantProcesosRestantes
-    """ carga procesos manualmente y devuelve una lista de objetos Proceso """
-    procesos = []
-    valid_count = 0
-    ids_usados=set() #para evitar repetidos
-    print("Se aceptarán hasta 10 procesos. Ingrese los datos solicitados.")
-    while valid_count < 10:
-        print(f"\n---Ingrese datos del proceso {valid_count+1}: ---")
-        id_proceso = input("ID Proceso: ")
-        if not id_proceso:
-            print("El ID del proceso no puede estar vacío.")
-            continue
-        if id_proceso in ids_usados:
-            print(f"Error: El ID '{id_proceso}' ya ha sido ingresado. Intente con otro.")
-            continue
-        
-        try:
-            tamaño = int(input("Tamaño (en KB, max 250): "))
-            t_arribo = int(input("Tiempo de Arribo (entero no negativo): "))
-            t_irrupcion = int(input("Tiempo de Irrupción (entero positivo): "))
-
-            if tamaño <= 0 or t_arribo < 0 or t_irrupcion <= 0:
-                 print("Error: El tamaño y la irrupción deben ser positivos. El arribo no debe ser negativo.")
-                 continue
-            
-
-            if tamaño > 250:
-                print("El tamaño del proceso excede la capacidad máxima permitida (250 KB). Intente nuevamente.")
-                continue
-
-        except ValueError:
-            print("Error: Se esperaba un número entero para tamaño, arribo o irrupción.")
-            continue
-
-        
-        proceso={ # formato diccionario
-                "id": str(id_proceso),
-                "tamaño": int(tamaño),
-                "t_arribo": int(t_arribo),
-                "t_arribo_MP": None,
-                "t_irrupcion" : int(t_irrupcion),
-                "tiempo_restante":0, 
-                "t_finalizacion":0,
-                "t_retorno": 0,
-                "total_retorno": 0,
-                "t_ingreso": 0,
-                "t_respuesta": 0,           #Tiempo de espera en lista de nuevos.
-                "t_totalenColaListo": 0,
-                "bandera_baja_logica": False,
-                "admitido": False
-            }
-        procesos.append(proceso)
-        ids_usados.add(id_proceso) # Añadir el ID al conjunto de usados
-        valid_count += 1
-
-    procesos.sort(key=lambda p: p["t_arribo"])
-
-    cantProcesosRestantes=valid_count
-    
-    return procesos
-
-
-def ejecutarMenu():
-    global paso1
-    global paso2
-    limpiar_pantalla()
-    mostrar_menu()
-    limpiar_buffer_entrada()
-    paso1 = selec_opcion_menu1()
-    if paso1 == 1:
-        paso2 = selec_opcion_menu2()
-    elif paso1 == 2:
-        paso2 = selec_opcion_menu2()
-    elif paso1 == 3:
-        limpiar_pantalla()
-        sys.exit()
-    
 
 
 def leer_procesos(csv_filename: str):
     """Lee el CSV y devuelve una LISTA de procesos (diccionarios) ordenados por t_arribo"""
     
-    #csv_path = Path(__file__).resolve().parent / csv_filename
-    csv_path = Path.cwd() / csv_filename
+    csv_path = Path(__file__).resolve().parent / csv_filename
     nuevos = []  # lista de procesos
     valid_count = 0
 
@@ -432,6 +259,30 @@ def leer_procesos(csv_filename: str):
 
     return lista_procesos_ordenados
 
+def ejecutarMenu():
+    global listaNuevos
+    console = Console()
+
+    #Bordes y texto 
+    limpiar_pantalla()
+    for y in range(1, yMaxPantalla):
+        for x in range(1, xMaxPantalla):
+            if (x == 1) or (x == xMaxPantalla-1):
+                gotoxy(x,y)
+                print("▓", end="")
+            if (y == 1) or (y == yMaxPantalla-1):
+                gotoxy(x,y)
+                print("▓", end="")
+    mostrar_logo2()
+    gotoxy(34,20)
+    console.print(f"[bold italic grey70]Seleccione un archivo...[/bold italic grey70]")
+
+    #Carga de archivo CSV
+    nombreArchivoCSV = seleccionarCSV()
+    listaNuevos = leer_procesos(nombreArchivoCSV)
+    limpiar_pantalla()
+
+############################## FUNCIONES PARA LA EJECUCIÓN ######################################
 
 def MPllena():
     for p in range(len(listaMP)):
@@ -629,7 +480,7 @@ def ADMICION_MULTI_5():
        suspendidos entran primero a MP.
     
     2. Luego, recorre listaProcesos en orden (FIFO):
-       - Si t_arribo <= T_simulador y bandera_baja_logica == False:
+       - Si t_arribo <= T_Simulacion y bandera_baja_logica == False:
          a) Si cabe en MP: mover_aColaListo(proceso) + cargarProcesoAlojado()
          b) Si NO cabe: mover_aColaSuspendido(proceso)
        - Se detiene cuando multiprogramacion >= 5
@@ -654,7 +505,7 @@ def ADMICION_MULTI_5():
     while multiprogramacion < 5:
         cambios = False
         for proceso in listaNuevos:
-            if proceso.get("bandera_baja_logica") is False and proceso.get("t_arribo") <= T_simulador:
+            if proceso.get("bandera_baja_logica") is False and proceso.get("t_arribo") <= T_Simulacion:
                 if len(listaListos) < 3 and cabeEnAlgunaParticionLIBRE(proceso):
                     mover_aColaListo(proceso)
                     AsignPartBestFit(aux)
@@ -695,11 +546,11 @@ def CiclosOciosos(proceso_siguiente: dict):
     if t_arribo is None:
         return
 
-    if t_arribo >= T_simulador:
+    if t_arribo >= T_Simulacion:
         multiprogramacion = len(listaListos) + len(listaSuspendidos)
-        avanzar = t_arribo - T_simulador
+        avanzar = t_arribo - T_Simulacion
         T_CPU_ocioso += avanzar
-        T_simulador = t_arribo
+        T_Simulacion = t_arribo
         multiprogramacion = len(listaListos) + len(listaSuspendidos)
 
 def buscarSiguiente():
@@ -719,7 +570,7 @@ def buscarSiguiente():
     CONCEPTO FIFO AQUÍ
     ════════════════════════════════════════════════════════════════════════
     - Recorre listaProcesos secuencialmente (como en un archivo CSV FIFO).
-    - Los primeros procesos que se encuentran con t_arribo <= T_simulador
+    - Los primeros procesos que se encuentran con t_arribo <= T_Simulacion
       son retornados para admisión.
     - buscarSiguiente() actúa como "visor FIFO": devuelve el próximo proceso
       que necesita atención de admisión.
@@ -733,13 +584,13 @@ def buscarSiguiente():
     # primero pendientes ya arribados pero sin ingresar o el proceso que arribo en este ciclo
     pendiente=None
     for p in listaNuevos:
-        if (p.get("bandera_baja_logica") is False) and (p.get("t_arribo") <= T_simulador):
+        if (p.get("bandera_baja_logica") is False) and (p.get("t_arribo") <= T_Simulacion):
             pendiente=p
             return pendiente
  
     # próximo arribo futuro
     for p in listaNuevos:
-        if (p.get("t_arribo") > T_simulador) and (p.get("bandera_baja_logica") is False):
+        if (p.get("t_arribo") > T_Simulacion) and (p.get("bandera_baja_logica") is False):
             #print(f"Busqueda del siguiente encontró un proceso del futuro {p}")
             return p
     return None
@@ -755,6 +606,28 @@ def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
 
 
 ####################################### FUNCIONES "MOSTRAR_TABLAS" ##########################################
+def mostrarNuevos():  #agustin
+    console = Console()
+
+    #Crear tabla
+    table = Table(title="Procesos en estado de Nuevo", show_lines=True)
+
+    #Columnas
+    table.add_column("Posición", justify="center", style="yellow", no_wrap=True)
+    table.add_column("ID  ", justify="center", style="yellow", no_wrap=True)
+    table.add_column("Tiempo de Arribo", justify="center" ,style="yellow")
+    table.add_column("Tiempo de Irrupcion", justify="center", style="yellow")
+
+    #Filas
+    for i in range(len(listaNuevos)):
+        table.add_row(str(i+1), str(listaNuevos[i]["id"]), str(listaNuevos[i]["t_arribo"]), str(listaNuevos[i]["t_irrupcion"]))
+
+    #Mostrar tabla
+    console.print(table)
+    console.print(f"[italic grey70]Archivo leído exitosamente![/italic grey70]")
+    print()
+    console.print(f"[italic grey70]Presione enter para continuar...[/italic grey70]")
+
 
 def mostrarColaListos():  #ezequiel
     """ Muestra la tabla de procesos en lista de listos """
@@ -967,9 +840,7 @@ def mostrarInforme(): #agustin
     print("Rendimiento del sistema:", round(rendimientoSistema, 3), "(procesos/ut)")
     #Saltar renglón
     print()
-    
     mostrarTerminados()
-
     #Saltar renglón
     print()  
     console.print(f"[italic grey70]Simulación terminada...[/italic grey70]")
@@ -977,6 +848,7 @@ def mostrarInforme(): #agustin
 def MostrarTablas():
     """Muestra todas las tablas disponibles en el simulador"""
     limpiar_pantalla()
+    mostrarNuevos()
     mostrarMemoriaPrincipal()
     mostrarColaListos()
     mostrarCPU()
@@ -984,6 +856,13 @@ def MostrarTablas():
     mostrarTerminados()
 
 ####################################### MAIN PRINCIPAL ##########################################
+ejecutarMenu()
+
+mostrarNuevos()
+
+msvcrt.getch()
+limpiar_pantalla()
+
 while len(listaTerminados) < len(listaNuevos):
     
     banderaMostrarTablas = False # bandera para mostrar tablas si hay cambios en admision o terminacion
@@ -1013,7 +892,7 @@ while len(listaTerminados) < len(listaNuevos):
         
         # Ejecutar un ciclo de CPU
         procesoEjecucion["tiempo_restante"] -= 1
-        T_simulador += 1
+        T_Simulacion += 1
         
         # Sumar tiempo de espera a los demas procesos en listaListos ya cargados para este ciclo
         for otrosProcesos in listaListos:
