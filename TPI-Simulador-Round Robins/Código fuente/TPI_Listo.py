@@ -53,7 +53,7 @@ listaMP=[
 listaTerminados=[]
 listaSuspendidos = []  
 T_Simulacion=0
-T_CPU_ocioso=0
+T_CPU_ocioso=0         #Empieza en -1 para que siempre se haga un incremento en el primer ciclo.
 cantProcesosRestantes=0
 multiprogramacion=0
 aux=None
@@ -624,6 +624,7 @@ def mostrarNuevos():  #agustin
     #Columnas
     table.add_column("Posición", justify="center", style="yellow", no_wrap=True)
     table.add_column("ID  ", justify="center", style="yellow", no_wrap=True)
+    table.add_column("Tamaño", justify="center" ,style="yellow")
     table.add_column("Tiempo de Arribo", justify="center" ,style="yellow")
     table.add_column("Tiempo de Irrupcion", justify="center", style="yellow")
 
@@ -806,6 +807,7 @@ def mostrarTerminados(): #agustin
     table.add_column("T. retorno", justify="center", style="yellow", no_wrap=True)
     table.add_column("T. ingreso", justify="center", style="yellow", no_wrap=True)
     table.add_column("T. respuesta", justify="center", style="yellow", no_wrap=True)
+    table.add_column("T. total de retorno", justify="center", style="yellow", no_wrap=True)
     table.add_column("T. total en listos", justify="center", style="yellow", no_wrap=True)
    
     #Filas
@@ -820,6 +822,7 @@ def mostrarTerminados(): #agustin
             str(listaTerminados[i]["t_retorno"]),
             str(listaTerminados[i]["t_ingreso"]),
             str(listaTerminados[i]["t_respuesta"]),
+            str(listaTerminados[i]["total_retorno"]),
             str(listaTerminados[i]["t_totalenColaListo"]),
         )
     
