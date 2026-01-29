@@ -242,7 +242,6 @@ def leer_procesos(csv_filename: str):
                     "t_irrupcion": int(t_irrupcion),
                     "tiempo_restante": int(t_irrupcion),
                     "t_finalizacion": 0,
-                    "t_retorno": 0,
                     "total_retorno": None,
                     "t_ingreso": None,
                     "t_respuesta": None,
@@ -286,6 +285,7 @@ def ejecutarMenu():
     nombreArchivoCSV = seleccionarCSV()
     listaNuevos = leer_procesos(nombreArchivoCSV)
     limpiar_pantalla()
+
 
 ################################ FUNCIONES PARA LA EJECUCIÓN ####################################
 
@@ -815,7 +815,7 @@ def mostrarTerminados(): #agustin
                 str(listaTerminados[i]["t_arribo"]),
                 str(listaTerminados[i]["t_arribo_MP"]),
                 str(listaTerminados[i]["t_irrupcion"]),
-                str(listaTerminados[i]["t_retorno"]),
+                str(listaTerminados[i]["t_finalizacion"]),
                 str(listaTerminados[i]["t_ingreso"]),
                 str(listaTerminados[i]["t_respuesta"]),
                 str(listaTerminados[i]["total_retorno"]),
@@ -837,7 +837,7 @@ def mostrarInforme(): #agustin
     #Sumatorias de tiempos para el informe final.
     for i in range(len(listaTerminados)):
         Sumatoria_TEspera += listaTerminados[i]["t_respuesta"]
-        Sumatoria_TRetorno += listaTerminados[i]["t_retorno"]
+        Sumatoria_TRetorno += listaTerminados[i]["t_finalizacion"]
 
     gotoxy(1,1)
     console.print("[bold underline grey70]Informe estadístico[/bold underline grey70]")
