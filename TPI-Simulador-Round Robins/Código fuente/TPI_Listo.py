@@ -52,7 +52,7 @@ listaMP=[
 ]
 listaTerminados=[]
 listaSuspendidos = []  
-T_Simulacion=0
+T_Simulacion=-1
 T_CPU_ocioso=0         #Empieza en -1 para que siempre se haga un incremento en el primer ciclo.
 cantProcesosRestantes=0
 multiprogramacion=0
