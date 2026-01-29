@@ -757,11 +757,73 @@ def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
 ################################# FUNCIONES MOSTRARTABLAS ################################
 def mostrarColaListos():  #ezequiel
     """ Muestra la tabla de procesos en lista de listos """
-    
+    console = Console()
+    table = Table(title="Procesos en COLA de LISTOS --> Estado: 'Listo'", show_lines=True)
+    cols = [
+        ("ID Proceso", "yellow"),
+        ("Tamaño", None),
+        ("T. Arribo", None),
+        ("T. Arribo a MP", None),
+        ("T. Irrupcion", None),
+        ("T. Respuesta", None),
+        ("T. Ingreso", None),
+        ("T. Restante de CPU", None),
+        ("T. Total de espera por CPU", None)
+    ]
+    for name, style in cols:
+        table.add_column(name, justify="center", style=style or "", no_wrap=False)
+
+    if listaListos:
+        for p in listaListos:
+            if not p.get("CPU"): # mostrar solo los que no están en CPU
+                table.add_row(
+                    str(p.get("id", "xxx")),
+                    str(p.get("tamaño", "xxx")),
+                    str(p.get("t_arribo", "xxx")),                    
+                    str(p.get("t_arribo_MP", "xxx")),
+                    str(p.get("t_irrupcion", "xxx")),
+                    str(p.get("t_Respuesta", "xxx")),
+                    str(p.get("t_ingreso", "xxx")),
+                    str(p.get("t_RestanteCPU", "xxx")),
+                    str(p.get("t_totalenColaListo", "xxx")),
+                )
+        # si la lista no esta vacia pero el unico proceso esta en CPU
+        if all(p.get("CPU") for p in listaListos):
+            table.add_row(*["xxx"] * len(cols))
+    else:# lista vacia y sin procesos para elegir en CPU
+        table.add_row(*["xxx"] * len(cols))
+    console.print(table)
+
+
 def mostrarCPU():  #ezequiel
     """ Muestra la tabla de procesos en CPU """
+    console = Console()
+    table = Table(title="Proceso utilizando CPU --> Estado: 'En Ejecución'", show_lines=True)
+    for h, style in ["ID Proceso", "Tamaño", "Particion", "T. Restante de CPU"]:
+        table.add_column(h, justify="center", style=style or "", no_wrap=False)
+    if listaListos:
+        for proceso in listaListos:
+            if proceso.get("CPU"):
+                #buscar particion en memoria principal
+                particion_asignada = None
+                for i, particion in enumerate(listaMP):
+                    proc_alojado = particion.get("Proceso_alojado")
+                    if proc_alojado and proc_alojado.get("id") == proceso.get("id"):
+                        particion_asignada = i 
+                        break
+                table.add_row(
+                    str(proceso.get("id", "xxx")),
+                    str(proceso.get("tamaño", "xxx")),
+                    str(listaMP[particion_asignada]["Particion"] if particion_asignada is not None else "xxx"),
+                    str(proceso.get("tiempo_restante", "xxx")),
+                )
+                break
+    else:
+        table.add_row(*["xxx"] * 4)
+    console.print(table)
 
-def mostrarMemoriaPrincipal():  #isabel
+
+def mostrarMemoriaPrincipal():  #agustin
     """ Muestra la tabla de particiones de memoria principal """
 
 def mostrarColaSuspendidos():  #isabel
