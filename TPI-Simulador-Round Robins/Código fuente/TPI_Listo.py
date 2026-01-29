@@ -51,9 +51,14 @@ listaMP=[
     },
 ]
 listaTerminados=[]
+<<<<<<< Updated upstream
 listaSuspendidos = []  
 T_Simulacion=-1
 T_CPU_ocioso=0         #Empieza en -1 para que siempre se haga un incremento en el primer ciclo.
+=======
+T_Simulacion=0
+T_CPU_ocioso=0
+>>>>>>> Stashed changes
 cantProcesosRestantes=0
 multiprogramacion=0
 aux=None
@@ -248,7 +253,6 @@ def leer_procesos(csv_filename: str):
                     "t_ingreso": None,
                     "t_respuesta": None,
                     "t_totalenColaListo": 0,
-                    "bandera_baja_logica": False,
                     "admitido": False
                 }
             except ValueError as e:
@@ -327,7 +331,7 @@ def mover_aColaListo(procActual):
     global T_Simulacion
 
     #Proceso entró en ámbito de multiprogramación
-    procActual["bandera_baja_logica"] = True
+    procActual["admitido"] = True
     
     #Tiempo en que quedó esperando en la lista de nuevos.
     if procActual["t_respuesta"] == None:
@@ -356,7 +360,7 @@ def mover_aColaSuspendido(procActual):
     global T_Simulacion
 
     #Proceso entró en ámbito de multiprogramación
-    procActual["bandera_baja_logica"] = True
+    procActual["admitido"] = True
     
     #Tiempo en que quedó esperando en la lista de nuevos.
     if procActual["t_respuesta"] == None:
@@ -387,16 +391,13 @@ def mandarTerminados(procActual,indiceMP):
     listaTerminados.append(procActual)
     
     #quitar de la listaListos el proceso
-    for p in listaListos():
-        if p["id"] == procActual["id"]:
-            listaListos.pop(procActual)
-            break
+    listaListos[:] = [p for p in listaListos if p["id"] != procActual["id"]]
 
 
 def BuscarSRTF() -> Optional[int]:
     """
     Busca el proceso con menor tiempo restante (SRTF) entre los listos que tengan
-    t_RestanteCPU > 0. Retorna el índice de la partición donde está alojado ese
+    tiempo_restante > 0. Retorna el índice de la partición donde está alojado ese
     proceso o None.
 
     ════════════════════════════════════════════════════════════════════════
@@ -417,10 +418,10 @@ def BuscarSRTF() -> Optional[int]:
        dict en listaListos)
     2. cargarProcesoAlojado(MP, puntero, aux) → MP[puntero]["Proceso_alojado"]
        = aux (MISMA REFERENCIA)
-    3. En ejecutarTodo(): proceso_actual["t_RestanteCPU"] -= 1 (modifica ambos:
+    3. En ejecutarTodo(): proceso_actual["tiempo_restante"] -= 1 (modifica ambos:
        listaListos Y MemoriaPrincipal simultáneamente porque son la misma referencia)
     4. BuscarSRTF() busca por 'id' en listaListos, encuentra el proceso con menor
-       t_RestanteCPU, a ese proceso lo marca como en CPU colocando en TRUE el campo CPU que actua como bandera, y retorna el índice de su partición en MemoriaPrincipal.
+       tiempo_restante, a ese proceso lo marca como en CPU colocando en TRUE el campo CPU que actua como bandera, y retorna el índice de su partición en MemoriaPrincipal.
     
     Esto es el puente entre:
     - FIFO (cola de admisión en listaListos)
@@ -434,7 +435,7 @@ def BuscarSRTF() -> Optional[int]:
     menorTR = float("inf")
     procesoElegido = None
     for proc in listaListos:
-        tr = proc.get("t_RestanteCPU", 0)
+        tr = proc.get("tiempo_restante", 0)
         proc["CPU"] = False  #marcar que no está en CPU
         if tr > 0 and tr < menorTR:
             menorTR = tr
@@ -488,7 +489,7 @@ def ADMICION_MULTI_5():
        suspendidos entran primero a MP.
     
     2. Luego, recorre listaProcesos en orden (FIFO):
-       - Si t_arribo <= T_Simulacion y bandera_baja_logica == False:
+       - Si t_arribo <= T_Simulacion y admitido == False:
          a) Si cabe en MP: mover_aColaListo(proceso) + cargarProcesoAlojado()
          b) Si NO cabe: mover_aColaSuspendido(proceso)
        - Se detiene cuando multiprogramacion >= 5
@@ -513,11 +514,12 @@ def ADMICION_MULTI_5():
     while multiprogramacion < 5:
         cambios = False
         for proceso in listaNuevos:
-            if proceso.get("bandera_baja_logica") is False and proceso.get("t_arribo") <= T_Simulacion:
-                if len(listaListos) < 3 and cabeEnAlgunaParticionLIBRE(proceso):
+            if (proceso.get("admitido") is False) and (proceso.get("t_arribo") <= T_Simulacion):
+                if (len(listaListos) < 3) and cabeEnAlgunaParticionLIBRE(proceso):
                     mover_aColaListo(proceso)
                     AsignPartBestFit(aux)
                     cambios = True
+                #elif not cabeEnAlgunaParticionLIBRE(proceso):
                 else:
                     mover_aColaSuspendido(proceso)
                     cambios = True
@@ -570,7 +572,7 @@ def buscarSiguiente():
     ════════════════════════════════════════════════════════════════════════
     ORDEN DE BÚSQUEDA (FIFO en listaProcesos)
     ════════════════════════════════════════════════════════════════════════
-    1. Procesos con `bandera_baja_logica` == False y `t_arribo` <= tiempo
+    1. Procesos con `admitido` == False y `t_arribo` <= tiempo
        actual (procesos ya arribados y no ingresados).
     2. Procesos cuyo `t_arribo` coincide con el instante actual.
     3. Si no hay ninguno, retorna el primer proceso futuro (próximo arribo).
@@ -593,13 +595,13 @@ def buscarSiguiente():
     # primero pendientes ya arribados pero sin ingresar o el proceso que arribo en este ciclo
     pendiente=None
     for p in listaNuevos:
-        if (p.get("bandera_baja_logica") is False) and (p.get("t_arribo") <= T_Simulacion):
+        if (p.get("admitido") is False) and (p.get("t_arribo") <= T_Simulacion):
             pendiente=p
             return pendiente
  
     # próximo arribo futuro
     for p in listaNuevos:
-        if (p.get("t_arribo") > T_Simulacion) and (p.get("bandera_baja_logica") is False):
+        if (p.get("t_arribo") > T_Simulacion) and (p.get("admitido") is False):
             #print(f"Busqueda del siguiente encontró un proceso del futuro {p}")
             return p
     return None
@@ -666,9 +668,9 @@ def mostrarColaListos():  #ezequiel
                     str(p.get("t_arribo", "xxx")),                    
                     str(p.get("t_arribo_MP", "xxx")),
                     str(p.get("t_irrupcion", "xxx")),
-                    str(p.get("t_Respuesta", "xxx")),
+                    str(p.get("t_respuesta", "xxx")),
                     str(p.get("t_ingreso", "xxx")),
-                    str(p.get("t_RestanteCPU", "xxx")),
+                    str(p.get("tiempo_restante", "xxx")),
                     str(p.get("t_totalenColaListo", "xxx")),
                 )
         # si la lista no esta vacia pero el unico proceso esta en CPU
@@ -683,7 +685,7 @@ def mostrarCPU():  #ezequiel
     """ Muestra la tabla de procesos en CPU """
     console = Console()
     table = Table(title="Proceso utilizando CPU --> Estado: 'En Ejecución'", show_lines=True)
-    for h, style in ["ID Proceso", "Tamaño", "Particion", "T. Restante de CPU"]:
+    for h, style in [("ID Proceso", None), ("Tamaño", None), ("Particion", None), ("T. Restante de CPU", None)]:
         table.add_column(h, justify="center", style=style or "", no_wrap=False)
     if listaListos:
         for proceso in listaListos:
@@ -783,7 +785,7 @@ def mostrarColaSuspendidos():  #isabel
         table.add_column(h, justify="right")
     if listaSuspendidos:
         for p in listaSuspendidos:
-            table.add_row(*(str(p.get(k, "xxx")) for k in ["id", "t_arribo", "tamaño", "t_irrupcion", "t_Respuesta", "t_ingreso", "t_RestanteCPU"]))
+            table.add_row(*(str(p.get(k, "xxx")) for k in ["id", "t_arribo", "tamaño", "t_irrupcion", "t_respuesta", "t_ingreso", "tiempo_restante"]))
     else:
         table.add_row(*["xxx"] * len(headers))
     console.print(table)
@@ -838,7 +840,7 @@ def mostrarInforme(): #agustin
 
     #Sumatorias de tiempos para el informe final.
     for i in range(len(listaTerminados)):
-        Sumatoria_TEspera += listaTerminados[i]["t_espera"]
+        Sumatoria_TEspera += listaTerminados[i]["t_respuesta"]
         Sumatoria_TRetorno += listaTerminados[i]["t_retorno"]
 
     gotoxy(1,1)
@@ -849,12 +851,10 @@ def mostrarInforme(): #agustin
     print("Tiempo de Retorno promedio:", Sumatoria_TRetorno / len(listaTerminados), "(ut)")
     gotoxy(1,4)
     rendimientoSistema = len(listaTerminados) / T_Simulacion
-    print("Rendimiento del sistema:", round(rendimientoSistema, 3), "(procesos/ut)")
-    #Saltar renglón
-    print()
+    print("Rendimiento del sistema:", round(rendimientoSistema, 3), "(procesos/ut)\n")#Saltar renglón
     mostrarTerminados()
     #Saltar renglón
-    print()  
+    print("\n")  
     console.print(f"[italic grey70]Simulación terminada...[/italic grey70]")
 
 def MostrarTablas():
@@ -923,8 +923,13 @@ while len(listaTerminados) < len(listaNuevos):
         if (len(listaListos) > 0) and (procesoEjecucion is None):
             print(f"Cambio de contexto al siguiente proceso SRTF.")
             indice_procesoEjecucion = BuscarSRTF()
+            if indice_procesoEjecucion is None:
+                break # vuelve al while mayor para un ciclo ocioso
             procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
             print(f"Cambio de contexto: {procesoEjecucion['id']} ingresa a CPU")
+
+        if indice_procesoEjecucion is None:
+            break #vuelve al while mayor para un ciclo ocioso
 
         ADMICION_MULTI_5() # revisar si hay admision de nuevos procesos después del cambio de contexto para ocupar el espacio liberado
         indice_procMasPrioridad = BuscarSRTF()
