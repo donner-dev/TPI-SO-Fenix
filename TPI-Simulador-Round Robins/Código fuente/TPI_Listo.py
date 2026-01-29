@@ -53,6 +53,7 @@ listaMP=[
 listaTerminados=[]
 listaSuspendidos = []  
 T_Simulacion=0
+T_CPU_ocioso=0
 cantProcesosRestantes=0
 multiprogramacion=0
 aux=None
@@ -307,7 +308,9 @@ def AsignPartBestFit(procActual):
         listaMP[pos]["Proceso_alojado"]= procActual
         listaMP[pos]["Ocupado"]= True
 
-def cabeEnAlgunaParticionLIBRE(listaMP,proc):
+def cabeEnAlgunaParticionLIBRE(proc):
+    global listaMP
+    
     for p in range(len(listaMP)):
         difTamaño= listaMP[p]["TamañoTotal"] - proc["tamaño"]
         if ((difTamaño >= 0) and (listaMP[p]["Ocupado"] == False)):
@@ -531,6 +534,7 @@ def CiclosOciosos(proceso_siguiente: dict):
     """
     global multiprogramacion
     global T_Simulacion
+    global T_CPU_ocioso
 
     # recalcular multiprogramacion
     multiprogramacion = len(listaListos) + len(listaSuspendidos)
