@@ -31,7 +31,7 @@ listaMP=[
         "Dueño": "usuario",
         "Proceso_alojado": {}, #MemoriaPrincipal[puntero]["Proceso_alojado"]= asigna VARIABLE_proceso_actual, asigna el diccionario completo del proceso
         "Fragmentacion Interna":0,
-        "dirComienzo": 151,
+        "dirComienzo": 201,
         "Ocupado": False
     },
     {
@@ -754,7 +754,8 @@ def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
         return True
 
 
-################################# FUNCIONES MOSTRARTABLAS ################################
+####################################### FUNCIONES "MOSTRAR_TABLAS" ##########################################
+
 def mostrarColaListos():  #ezequiel
     """ Muestra la tabla de procesos en lista de listos """
     console = Console()
@@ -825,8 +826,76 @@ def mostrarCPU():  #ezequiel
 
 def mostrarMemoriaPrincipal():  #agustin
     """ Muestra la tabla de particiones de memoria principal """
+    console = Console()
+
+    #Anotaciones
+    #{
+    #Formato tabla mem principal.
+
+    #id_particion (1,2,3)
+    #id_proceso alojado 
+    #tamaño part
+    #frag
+    #Estado (disponible/ocupado)
+
+    #Agregar fila de sistema operativo (partición 0)
+    #}
+
+    #Tabla
+    table = Table(title="Procesos en estado de Listo (En Memoria Principal)", show_lines=True)
+
+
+    #Columnas
+    table.add_column("Partición", justify="right", style="yellow")
+    table.add_column("Tamaño Total", justify="right", style="yellow")
+    table.add_column("Dir. comienzo", justify="right", style="yellow")
+    table.add_column("Frag. Interna", justify="right", style="yellow")
+    table.add_column("ID Proceso", justify="center", style="yellow", no_wrap=True)
+    table.add_column("T. de Arribo", justify="center", style="yellow")
+    table.add_column("T. de Irrupcion", justify="center", style="yellow")
+    table.add_column("Dueño", justify="center", style="yellow")
+    table.add_column("Estado", justify="center", style="yellow")
+
+
+    #Filas
+
+    #Primero la fila del Sistema Operativo
+    table.add_row(
+        "0",        #Partición del SO
+        "100",
+        "451",      #Dir Comienzo
+        "-",
+        "-",
+        "-",
+        "-",
+        "SO",
+        "Ocupado",
+    )
+
+    #Luego las particiones del usuario 
+    for i in range(len(listaMP)):
+        proc = listaMP[i]["Proceso_alojado"]
+        if str(listaMP[i]["Ocupado"]) == "True":
+            estadoPart = "Ocupado"
+        else:
+            estadoPart = "Libre" 
+        table.add_row(
+            str(listaMP[i]["Particion"]),
+            str(listaMP[i]["TamañoTotal"]),
+            str(listaMP[i]["dirComienzo"]),
+            str(listaMP[i]["Fragmentacion Interna"]),
+            str(proc.get("id", "-")),
+            str(proc.get("t_arribo", "-")),
+            str(proc.get("t_irrupcion", "-")),
+            str(listaMP[i]["Dueño"]),
+            str(estadoPart),
+        )
+    console.print(table)
+
 
 def mostrarColaSuspendidos():  #isabel
+    """ Muestra la tabla de procesos en estado de 'suspendido' """
+    
     console = Console()
     table = Table(title=" [ Procesos en Memoria Secundaria --> Estado: 'Listo y Suspendido' ]", show_lines=True)
     headers = ["ID Proceso", "Tiempo Arribo", "Tamaño", "Tiempo Irrupcion", "Tiempo de Respuesta", "Tiempo de Ingreso", "Tiempo Restante de CPU"]
@@ -839,23 +908,76 @@ def mostrarColaSuspendidos():  #isabel
         table.add_row(*["xxx"] * len(headers))
     console.print(table)
 
+
 def mostrarTerminados(): #agustin
     """ Muestra la tabla de procesos terminados """
+    
+    global T_Simulacion
+    
+    console = Console()
+    table = Table(title="Procesos Terminados", show_lines=True)
+
+    #Sumatorias de tiempos para el informe final.
+    for i in range(len(listaTerminados)):
+        Sumatoria_TEspera += listaTerminados[i]["t_espera"]
+        Sumatoria_TRetorno += listaTerminados[i]["t_retorno"]
+
+    gotoxy(1,1)
+    console.print("[bold underline grey70]Informe estadístico[/bold underline grey70]")
+    gotoxy(1,2)
+    print("Tiempo de Espera promedio:", Sumatoria_TEspera / len(listaTerminados), "(ut)")
+    gotoxy(1,3)
+    print("Tiempo de Retorno promedio:", Sumatoria_TRetorno / len(listaTerminados), "(ut)")
+    gotoxy(1,4)
+    rendimientoSistema = len(listaTerminados) / T_Simulacion
+    print("Rendimiento del sistema:", round(rendimientoSistema, 3), "(procesos/ut)")
+    print()
+    
+    #Columnas
+    table.add_column("Posicion", justify="center", style="yellow", no_wrap=True)
+    table.add_column("ID", justify="center", style="yellow", no_wrap=True)
+    table.add_column("Tamaño", justify="center", style="yellow", no_wrap=True)
+    table.add_column("T. de arribo", justify="center", style="yellow", no_wrap=True)
+    table.add_column("T. arribo a MP", justify="center", style="yellow", no_wrap=True)
+    table.add_column("T. irrupcion", justify="center", style="yellow", no_wrap=True)
+    table.add_column("T. retorno", justify="center", style="yellow", no_wrap=True)
+    table.add_column("T. ingreso", justify="center", style="yellow", no_wrap=True)
+    table.add_column("T. respuesta", justify="center", style="yellow", no_wrap=True)
+    table.add_column("T. total en listos", justify="center", style="yellow", no_wrap=True)
+   
+    #Filas
+    for i in range(len(listaTerminados)):
+        table.add_row(
+            str(i+1),
+            str(listaTerminados[i]["id"]),
+            str(listaTerminados[i]["tamaño"]),
+            str(listaTerminados[i]["t_arribo"]),
+            str(listaTerminados[i]["t_arribo_MP"]),
+            str(listaTerminados[i]["t_irrupcion"]),
+            str(listaTerminados[i]["t_retorno"]),
+            str(listaTerminados[i]["t_ingreso"]),
+            str(listaTerminados[i]["t_respuesta"]),
+            str(listaTerminados[i]["t_totalenColaListo"]),
+        )
+    
+    #Mostrar tabla
+    console.print(table)
+    #Saltar renglón
+    print()  
+    console.print(f"[italic grey70]Simulación terminada...[/italic grey70]")
 
 
-
-####################################### FUNCIONES GRÁFICAS ######################################
-#        borradisimo
-
-
-
-
-
-
-
+def MostrarTablas():
+    """Muestra todas las tablas disponibles en el simulador"""
+    limpiar_pantalla()
+    mostrarMemoriaPrincipal()
+    mostrarColaListos()
+    mostrarCPU()
+    mostrarColaSuspendidos()
+    mostrarTerminados()
 
 
-############# BUCLE DE EJECUCIÓN #############
+####################################### MAIN PRINCIPAL ##########################################
 while len(listaTerminados) < len(listaNuevos):
     
     banderaMostrarTablas = False # bandera para mostrar tablas si hay cambios en admision o terminacion
@@ -920,11 +1042,9 @@ while len(listaTerminados) < len(listaNuevos):
                 # la tabla de CPU se actualiza en la siguiente sección gráfica
         
         if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
-            #Mostrar pantalla
+            #Mostrar pantalla poner todas las tablas.
             banderaMostrarTablas = False # resetear bandera para otro ciclo
             
 
     #Más abajo mostrar el informe
 
-def mostrar_listaTerminados():
-    
