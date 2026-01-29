@@ -51,9 +51,8 @@ listaMP=[
     },
 ]
 listaTerminados=[]
-listaSuspendidos = []  
-T_Simulacion=-1
-T_CPU_ocioso=0         #Empieza en -1 para que siempre se haga un incremento en el primer ciclo.
+T_Simulacion=-1         #Empieza en -1 para que siempre se haga un incremento en el primer ciclo.
+T_CPU_ocioso=0         
 cantProcesosRestantes=0
 multiprogramacion=0
 aux=None
@@ -627,8 +626,7 @@ def mostrarNuevos():  #agustin
 
     #Filas
     for i in range(len(listaNuevos)):
-        table.add_row(str(i+1), str(listaNuevos[i]["id"]), str(listaNuevos[i]["t_arribo"]), str(listaNuevos[i]["t_irrupcion"]))
-
+        table.add_row(str(i+1), str(listaNuevos[i]["id"]), str(listaNuevos[i]["tamaño"]), str(listaNuevos[i]["t_arribo"]), str(listaNuevos[i]["t_irrupcion"]))
     #Mostrar tabla
     console.print(table)
     console.print(f"[italic grey70]Archivo leído exitosamente![/italic grey70]")
@@ -808,21 +806,23 @@ def mostrarTerminados(): #agustin
     table.add_column("T. total en listos", justify="center", style="yellow", no_wrap=True)
    
     #Filas
-    for i in range(len(listaTerminados)):
-        table.add_row(
-            str(i+1),
-            str(listaTerminados[i]["id"]),
-            str(listaTerminados[i]["tamaño"]),
-            str(listaTerminados[i]["t_arribo"]),
-            str(listaTerminados[i]["t_arribo_MP"]),
-            str(listaTerminados[i]["t_irrupcion"]),
-            str(listaTerminados[i]["t_retorno"]),
-            str(listaTerminados[i]["t_ingreso"]),
-            str(listaTerminados[i]["t_respuesta"]),
-            str(listaTerminados[i]["total_retorno"]),
-            str(listaTerminados[i]["t_totalenColaListo"]),
-        )
-    
+    if len(listaTerminados) != 0:
+        for i in range(len(listaTerminados)):
+            table.add_row(
+                str(i+1),
+                str(listaTerminados[i]["id"]),
+                str(listaTerminados[i]["tamaño"]),
+                str(listaTerminados[i]["t_arribo"]),
+                str(listaTerminados[i]["t_arribo_MP"]),
+                str(listaTerminados[i]["t_irrupcion"]),
+                str(listaTerminados[i]["t_retorno"]),
+                str(listaTerminados[i]["t_ingreso"]),
+                str(listaTerminados[i]["t_respuesta"]),
+                str(listaTerminados[i]["total_retorno"]),
+                str(listaTerminados[i]["t_totalenColaListo"]),
+            )
+    else:
+        table.add_row(*["xxx"] * 11)
     #Mostrar tabla
     console.print(table)
 
