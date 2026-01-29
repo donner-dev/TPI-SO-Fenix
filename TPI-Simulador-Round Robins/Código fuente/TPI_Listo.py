@@ -844,7 +844,6 @@ def mostrarMemoriaPrincipal():  #agustin
     #Tabla
     table = Table(title="Procesos en estado de Listo (En Memoria Principal)", show_lines=True)
 
-
     #Columnas
     table.add_column("Partición", justify="right", style="yellow")
     table.add_column("Tamaño Total", justify="right", style="yellow")
@@ -856,9 +855,7 @@ def mostrarMemoriaPrincipal():  #agustin
     table.add_column("Dueño", justify="center", style="yellow")
     table.add_column("Estado", justify="center", style="yellow")
 
-
     #Filas
-
     #Primero la fila del Sistema Operativo
     table.add_row(
         "0",        #Partición del SO
@@ -917,22 +914,6 @@ def mostrarTerminados(): #agustin
     console = Console()
     table = Table(title="Procesos Terminados", show_lines=True)
 
-    #Sumatorias de tiempos para el informe final.
-    for i in range(len(listaTerminados)):
-        Sumatoria_TEspera += listaTerminados[i]["t_espera"]
-        Sumatoria_TRetorno += listaTerminados[i]["t_retorno"]
-
-    gotoxy(1,1)
-    console.print("[bold underline grey70]Informe estadístico[/bold underline grey70]")
-    gotoxy(1,2)
-    print("Tiempo de Espera promedio:", Sumatoria_TEspera / len(listaTerminados), "(ut)")
-    gotoxy(1,3)
-    print("Tiempo de Retorno promedio:", Sumatoria_TRetorno / len(listaTerminados), "(ut)")
-    gotoxy(1,4)
-    rendimientoSistema = len(listaTerminados) / T_Simulacion
-    print("Rendimiento del sistema:", round(rendimientoSistema, 3), "(procesos/ut)")
-    print()
-    
     #Columnas
     table.add_column("Posicion", justify="center", style="yellow", no_wrap=True)
     table.add_column("ID", justify="center", style="yellow", no_wrap=True)
@@ -962,10 +943,36 @@ def mostrarTerminados(): #agustin
     
     #Mostrar tabla
     console.print(table)
+
+def mostrarInforme(): #agustin
+    """ Muestra la tabla de procesos terminados con el informe final """
+    global T_Simulacion
+    
+    console = Console()
+    table = Table(title="Procesos Terminados", show_lines=True)
+
+    #Sumatorias de tiempos para el informe final.
+    for i in range(len(listaTerminados)):
+        Sumatoria_TEspera += listaTerminados[i]["t_espera"]
+        Sumatoria_TRetorno += listaTerminados[i]["t_retorno"]
+
+    gotoxy(1,1)
+    console.print("[bold underline grey70]Informe estadístico[/bold underline grey70]")
+    gotoxy(1,2)
+    print("Tiempo de Espera promedio:", Sumatoria_TEspera / len(listaTerminados), "(ut)")
+    gotoxy(1,3)
+    print("Tiempo de Retorno promedio:", Sumatoria_TRetorno / len(listaTerminados), "(ut)")
+    gotoxy(1,4)
+    rendimientoSistema = len(listaTerminados) / T_Simulacion
+    print("Rendimiento del sistema:", round(rendimientoSistema, 3), "(procesos/ut)")
+    #Saltar renglón
+    print()
+    
+    mostrarTerminados()
+
     #Saltar renglón
     print()  
     console.print(f"[italic grey70]Simulación terminada...[/italic grey70]")
-
 
 def MostrarTablas():
     """Muestra todas las tablas disponibles en el simulador"""
@@ -975,7 +982,6 @@ def MostrarTablas():
     mostrarCPU()
     mostrarColaSuspendidos()
     mostrarTerminados()
-
 
 ####################################### MAIN PRINCIPAL ##########################################
 while len(listaTerminados) < len(listaNuevos):
@@ -1045,6 +1051,5 @@ while len(listaTerminados) < len(listaNuevos):
             #Mostrar pantalla poner todas las tablas.
             banderaMostrarTablas = False # resetear bandera para otro ciclo
             
-
-    #Más abajo mostrar el informe
-
+    #Informe final al terminar la simulación
+    mostrarInforme()
