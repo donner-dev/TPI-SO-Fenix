@@ -636,11 +636,10 @@ def mostrarNuevos():  #agustin
     table.add_column("Tamaño", justify="center" ,style="yellow")
     table.add_column("Tiempo de Arribo", justify="center" ,style="yellow")
     table.add_column("Tiempo de Irrupcion", justify="center", style="yellow")
-    table.add_column("Estado", justify="center", style="yellow")
 
     #Filas
     for i in range(len(listaNuevos)):
-        table.add_row(str(i+1), str(listaNuevos[i]["id"]), str(listaNuevos[i]["tamaño"]), str(listaNuevos[i]["t_arribo"]), str(listaNuevos[i]["t_irrupcion"]), "Nuevo")
+        table.add_row(str(i+1), str(listaNuevos[i]["id"]), str(listaNuevos[i]["tamaño"]), str(listaNuevos[i]["t_arribo"]), str(listaNuevos[i]["t_irrupcion"]))
     #Mostrar tabla
     console.print(table)
     console.print(f"[italic grey70]Archivo leído exitosamente![/italic grey70]")
@@ -663,7 +662,6 @@ def mostrarColaListos():  #ezequiel
         ("T. Ingreso", None),
         ("T. Restante de CPU", None),
         ("T. Total de espera por CPU", None),
-        ("Estado", None),
     ]
     for name, style in cols:
         table.add_column(name, justify="center", style=style or "", no_wrap=False)
@@ -682,7 +680,6 @@ def mostrarColaListos():  #ezequiel
                     str(p.get("t_ingreso", "xxx")),
                     str(p.get("t_RestanteCPU", "xxx")),
                     str(p.get("t_totalenColaListo", "xxx")),
-                    "Listo"
                 )
         # si la lista no esta vacia pero el unico proceso esta en CPU
         if all(p.get("CPU") for p in listaListos):
@@ -696,7 +693,7 @@ def mostrarCPU():  #ezequiel
     """ Muestra la tabla de procesos en CPU """
     console = Console()
     table = Table(title="Proceso utilizando CPU --> Estado: 'En Ejecución'", show_lines=True)
-    for h, style in [("ID Proceso", "yellow"), ("Tamaño", None), ("Particion", None), ("T. Restante de CPU", None), ("Estado", None)]:
+    for h, style in [("ID Proceso", "yellow"), ("Tamaño", None), ("Particion", None), ("T. Restante de CPU", None)]:
         table.add_column(h, justify="center", style=style or "", no_wrap=False)
     if listaListos:
         for proceso in listaListos:
@@ -716,7 +713,7 @@ def mostrarCPU():  #ezequiel
                 )
                 break
     else:
-        table.add_row(*["xxx"] * 5)
+        table.add_row(*["xxx"] * 4)
     console.print(table)
 
 
@@ -785,7 +782,7 @@ def mostrarColaSuspendidos():  #isabel
     
     console = Console()
     table = Table(title="Procesos en Memoria Secundaria --> Estado: 'Listo y Suspendido'", show_lines=True)
-    headers = ["ID Proceso", "Tiempo Arribo", "Tamaño", "Tiempo Irrupcion", "Tiempo de Respuesta", "Tiempo de Ingreso", "Tiempo Restante de CPU", "Estado"]
+    headers = ["ID Proceso", "Tiempo Arribo", "Tamaño", "Tiempo Irrupcion", "Tiempo de Respuesta", "Tiempo de Ingreso", "Tiempo Restante de CPU"]
     for h in headers:
         table.add_column(h, justify="right", style="yellow" if h == "ID Proceso" else "", no_wrap=False)
     if listaSuspendidos:
@@ -811,12 +808,11 @@ def mostrarTerminados(): #agustin
     table.add_column("T. de arribo", justify="center", no_wrap=True)
     table.add_column("T. arribo a MP", justify="center", no_wrap=True)
     table.add_column("T. irrupcion", justify="center", no_wrap=True)
-    table.add_column("T. retorno", justify="center", no_wrap=True)
+    table.add_column("T. finalizacion", justify="center", no_wrap=True)
     table.add_column("T. ingreso", justify="center", no_wrap=True)
     table.add_column("T. respuesta", justify="center", no_wrap=True)
     table.add_column("T. total de retorno", justify="center", no_wrap=True)
     table.add_column("T. total en listos", justify="center", no_wrap=True)
-    table.add_column("Estado", justify="center", no_wrap=True)
    
     #Filas
     if len(listaTerminados) != 0:
@@ -833,10 +829,9 @@ def mostrarTerminados(): #agustin
                 str(listaTerminados[i]["t_respuesta"]),
                 str(listaTerminados[i]["total_retorno"]),
                 str(listaTerminados[i]["t_totalenColaListo"]),
-                "Terminado"
             )
     else:
-        table.add_row(*["xxx"] * 12)
+        table.add_row(*["xxx"] * 11)
     #Mostrar tabla
     console.print(table)
 
