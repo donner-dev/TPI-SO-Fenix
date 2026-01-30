@@ -876,10 +876,12 @@ def mostrarInforme(): #agustin
 
     gotoxy(1,1)
     console.print("[bold underline grey70]Informe estadístico[/bold underline grey70]")
+    Sumatoria_TEspera = Sumatoria_TEspera / len(listaTerminados)
     gotoxy(1,2)
-    print("Tiempo de Espera promedio:", Sumatoria_TEspera / len(listaTerminados), "(ut)")
+    print("Tiempo de Espera promedio:", round(Sumatoria_TEspera, 2), "(ut)")
+    Sumatoria_TRetorno = Sumatoria_TRetorno / len(listaTerminados)
     gotoxy(1,3)
-    print("Tiempo de Retorno promedio:", Sumatoria_TRetorno / len(listaTerminados), "(ut)")
+    print("Tiempo de Retorno promedio:", round(Sumatoria_TRetorno, 2), "(ut)")
     gotoxy(1,4)
     rendimientoSistema = len(listaTerminados) / T_Simulacion
     print("Rendimiento del sistema:", round(rendimientoSistema, 3), "(procesos/ut)\n")#Saltar renglón
