@@ -771,10 +771,10 @@ def mostrarMemoriaPrincipal():  #agustin
     table = Table(title="Procesos en estado de Listo (En Memoria Principal)", show_lines=True)
 
     #Columnas
-    table.add_column("Partición", justify="right")
-    table.add_column("Tamaño Total", justify="right")
-    table.add_column("Dir. comienzo", justify="right")
-    table.add_column("Frag. Interna", justify="right")
+    table.add_column("Partición", justify="center")
+    table.add_column("Tamaño Total", justify="center")
+    table.add_column("Dir. comienzo", justify="center")
+    table.add_column("Frag. Interna", justify="center")
     table.add_column("ID Proceso", justify="center", style="yellow", no_wrap=True)
     table.add_column("Dueño", justify="center")
     table.add_column("Estado Part.", justify="center", style="bright_magenta")
@@ -785,8 +785,8 @@ def mostrarMemoriaPrincipal():  #agustin
         "0",        #Partición del SO
         "100",
         "451",      #Dir Comienzo
-        "-",
-        "-",
+        "xxx",
+        "xxx",
         "SO",
         "Ocupado",
     )
