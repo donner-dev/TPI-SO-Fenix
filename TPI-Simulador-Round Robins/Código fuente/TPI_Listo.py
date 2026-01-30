@@ -651,28 +651,34 @@ def actualizar_estado_Proceso(proceso: Dict) -> Optional[str]:
     return None
 
 ####################################### FUNCIONES "MOSTRAR_TABLAS" ##########################################
+
+def mostrarTablasActualizadas():
+    global listaNuevos
+    console = Console()
+      #renderizar la tablita hermosa con rich, ciclando los objetos en Procesos
+    table = Table(title="Procesos Cargados", show_lines=True)
+    table.add_column("ID Proceso", justify="right", style="yellow", no_wrap=True)
+    table.add_column("Tiempo Arribo", justify="right")
+    table.add_column("Tamaño",justify="right" )
+    table.add_column("Tiempo Irrupcion", justify="right")
+    table.add_column("ESTADO", justify="right")
+    for p in listaNuevos:
+        estadoActual= actualizar_estado_Proceso(p)
+        table.add_row( #medio tipo:  array[0] pero con los key del diccionario
+            str(p["id"]),
+            str(p["t_arribo"]),
+            str(p["tamaño"]),
+            str(p["t_irrupcion"]),
+            estadoActual
+        )
+    console.print(table)
+
 def mostrarNuevos():  #agustin
     console = Console()
-
-    #Crear tabla
-    table = Table(title="Procesos en estado de Nuevo", show_lines=True)
-
-    #Columnas
-    table.add_column("Posición", justify="center", style="yellow", no_wrap=True)
-    table.add_column("ID  ", justify="center", style="yellow", no_wrap=True)
-    table.add_column("Tamaño", justify="center" ,style="yellow")
-    table.add_column("Tiempo de Arribo", justify="center" ,style="yellow")
-    table.add_column("Tiempo de Irrupcion", justify="center", style="yellow")
-
-    #Filas
-    for i in range(len(listaNuevos)):
-        table.add_row(str(i+1), str(listaNuevos[i]["id"]), str(listaNuevos[i]["tamaño"]), str(listaNuevos[i]["t_arribo"]), str(listaNuevos[i]["t_irrupcion"]))
-    #Mostrar tabla
-    console.print(table)
+    mostrarTablasActualizadas()
     console.print(f"[italic grey70]Archivo leído exitosamente![/italic grey70]")
     print()
     console.print(f"[italic grey70]Presione enter para continuar...[/italic grey70]")
-
 
 def mostrarColaListos():  #ezequiel
     """ Muestra la tabla de procesos en lista de listos """
@@ -890,26 +896,6 @@ def mostrarInforme(): #agustin
     print("\n")  
     console.print(f"[italic grey70]Simulación terminada...[/italic grey70]")
 
-def mostrarTablasActualizadas():
-    global listaNuevos
-    console = Console()
-      #renderizar la tablita hermosa con rich, ciclando los objetos en Procesos
-    table = Table(title="Procesos Cargados", show_lines=True)
-    table.add_column("ID Proceso", justify="right", style="yellow", no_wrap=True)
-    table.add_column("Tiempo Arribo", justify="right")
-    table.add_column("Tamaño",justify="right" )
-    table.add_column("Tiempo Irrupcion", justify="right")
-    table.add_column("ESTADO", justify="right")
-    for p in listaNuevos:
-        estadoActual= actualizar_estado_Proceso(p)
-        table.add_row( #medio tipo:  array[0] pero con los key del diccionario
-            str(p["id"]),
-            str(p["t_arribo"]),
-            str(p["tamaño"]),
-            str(p["t_irrupcion"]),
-            estadoActual
-        )
-    console.print(table)
 
 def MostrarTablas():
     """Muestra todas las tablas disponibles en el simulador"""
