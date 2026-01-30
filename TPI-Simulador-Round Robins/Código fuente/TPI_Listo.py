@@ -1026,4 +1026,4 @@ while len(listaTerminados) < len(listaNuevos):
 #Informe final al terminar la simulación
 mostrarInforme()
 input("Presione ENTER para cerrar...")
-#asarake saraja
+#asarake saraja...
