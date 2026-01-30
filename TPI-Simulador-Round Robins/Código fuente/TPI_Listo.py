@@ -639,6 +639,7 @@ def mostrarColaListos():  #ezequiel
     console = Console()
     table = Table(title="Procesos en COLA de LISTOS --> Estado: 'Listo'", show_lines=True)
     cols = [
+        ("Orden", "yellow"),
         ("ID Proceso", "yellow"),
         ("Tamaño", None),
         ("T. Arribo", None),
@@ -656,6 +657,7 @@ def mostrarColaListos():  #ezequiel
         for p in listaListos:
             if not p.get("CPU"): # mostrar solo los que no están en CPU
                 table.add_row(
+                    str(listaListos.index(p) + 1),
                     str(p.get("id", "xxx")),
                     str(p.get("tamaño", "xxx")),
                     str(p.get("t_arribo", "xxx")),                    
