@@ -943,6 +943,8 @@ while len(listaTerminados) < len(listaNuevos):
     if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
             #Mostrar pantalla poner todas las tablas.
             banderaMostrarTablas = False # resetear bandera para otro ciclo
+            print(f"Tiempo de simulación actual: >>>>>>>>>>>>>>>> {T_Simulacion} (ut) <<<<<<<<<<<<<<<<")
+            print(f"Multiprogramación actual: >>>>>>>>>>>>>>>> {multiprogramacion} procesos <<<<<<<<<<<<<<<<")
             MostrarTablas()
             print(f"Tiempo de simulación actual: >>>>>>>>>>>>>>>> {T_Simulacion} (ut) <<<<<<<<<<<<<<<<")
             print(f"Multiprogramación actual: >>>>>>>>>>>>>>>> {multiprogramacion} procesos <<<<<<<<<<<<<<<<")
@@ -969,7 +971,7 @@ while len(listaTerminados) < len(listaNuevos):
         # Sumar tiempo de espera a los demas procesos en listaListos ya cargados para este ciclo
         for otrosProcesos in listaListos:
             if otrosProcesos["id"] != procesoEjecucion["id"]:
-                otrosProcesos["t_totalenColaListo"] = otrosProcesos.get("t_totalenColaListo", 0) + 1
+                otrosProcesos["t_totalenColaListo"] = otrosProcesos.get("t_totalenColaListo") + 1
         
         # Verificar si llegó un nuevo proceso para admisión
         ADMICION_MULTI_5() #acomoda memoria si es necesario y luego termina de admitir
@@ -1009,6 +1011,8 @@ while len(listaTerminados) < len(listaNuevos):
         if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
             #Mostrar pantalla poner todas las tablas.
             banderaMostrarTablas = False # resetear bandera para otro ciclo
+            print(f"Tiempo de simulación actual: >>>>>>>>>>>>>>>> {T_Simulacion} (ut) <<<<<<<<<<<<<<<<")
+            print(f"Multiprogramación actual: >>>>>>>>>>>>>>>> {multiprogramacion} procesos <<<<<<<<<<<<<<<<")            
             MostrarTablas()
             print(f"Tiempo de simulación actual: >>>>>>>>>>>>>>>> {T_Simulacion} (ut) <<<<<<<<<<<<<<<<")
             print(f"Multiprogramación actual: >>>>>>>>>>>>>>>> {multiprogramacion} procesos <<<<<<<<<<<<<<<<")
@@ -1017,3 +1021,4 @@ while len(listaTerminados) < len(listaNuevos):
             limpiar_pantalla()
     #Informe final al terminar la simulación
     mostrarInforme()
+    input("Presione ENTER para cerrar...")
