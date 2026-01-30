@@ -57,7 +57,6 @@ cantProcesosRestantes=0
 multiprogramacion=0
 aux=None
 banderaMostrarTablas=False
-DEBUG = False  # habilitar para comprobaciones internas (no activa por defecto)
 
 #variables de cálculo estadístico:
 Sumatoria_TRetorno= 0
@@ -296,16 +295,6 @@ def MPllena():
             return False
     return True
 
-# Utility: actualizar campos de un proceso de forma segura (solo sobrescribe valores no-None)
-def update_process_fields(proc: dict, **fields) -> None:
-    """Setea en `proc` solo las claves cuyo valor en `fields` no es None.
-    - Preserva valores existentes cuando el nuevo valor es None.
-    - Útil para mover procesos entre listas sin perder datos previos.
-    """
-    for k, v in fields.items():
-        if v is not None:
-            proc[k] = v
-
 #Adaptar best Fit
 def AsignPartBestFit(procActual):
     global T_Simulacion
@@ -356,31 +345,21 @@ def mover_aColaListo(procActual):
     procActual.setdefault("t_RestanteCPU", procActual.get("t_irrupcion"))
 
     # preparar tiempo de ingreso: instante en que el sim. lo acomoda en memoria principal o secundaria
-    ingreso_val = procActual.get("t_ingreso") if procActual.get("t_ingreso") is not None else T_Simulacion
+    if procActual["t_ingreso"] is None:
+        procActual["t_ingreso"] = T_Simulacion
+    else:
+        procActual["t_ingreso"] = procActual.get("t_ingreso")
 
-    # preparar tiempo de arribo a MP: debe depender de si `t_arribo_MP` ya estaba definido,
-    # no de si `t_ingreso` era None (antes había una lógica invertida aquí)
-    arribo_mp_val = procActual.get("t_arribo_MP") if procActual.get("t_arribo_MP") is not None else ingreso_val
-
-    # aplicar los cambios de forma atómica y segura
-    update_process_fields(
-        procActual,
-        admitido=True,
-        t_respuesta=(T_Simulacion - procActual["t_arribo"]) if procActual.get("t_respuesta") is None else procActual.get("t_respuesta"),
-        t_totalenColaListo=(0 if procActual.get("t_totalenColaListo") is None else procActual.get("t_totalenColaListo")),
-        t_RestanteCPU=procActual.get("t_RestanteCPU", procActual.get("t_irrupcion")),
-        t_ingreso=ingreso_val,
-        t_arribo_MP=arribo_mp_val,
-    )
-
+    #preparar tiempo de arribo: cuando llega a memoria principal
+    if procActual["t_ingreso"] is None:
+        procActual["t_arribo_MP"] = T_Simulacion
+    else:
+        procActual["t_arribo_MP"] = procActual.get("t_arribo_MP")
     #ingresa proceso a listaListos (cola de turnos)
+    
     global aux
     aux = procActual
-    # evitar duplicados por ID (seguridad defensiva)
-    if not any(p.get("id") == procActual.get("id") for p in listaListos):
-        listaListos.append(procActual)
-
-
+    listaListos.append(procActual)
 
 
 def mover_aColaSuspendido(procActual):
@@ -424,8 +403,8 @@ def mandarTerminados(procActual,indiceMP):
     t_arribo_mp_val = procActual.get("t_arribo_MP", procActual.get("t_arribo", T_Simulacion))
     procActual["total_retorno"] = int(procActual.get("t_finalizacion", T_Simulacion) - t_arribo_mp_val)
 
-    #agregar a la lista de terminados (guardamos una copia para evitar mutaciones posteriores)
-    listaTerminados.append(procActual.copy())
+    #agregar a la lista de terminados
+    listaTerminados.append(procActual)
 
     #quitar de la listaListos el proceso
     listaListos[:] = [p for p in listaListos if p["id"] != procActual["id"]]
@@ -504,9 +483,6 @@ def CARGAR_MPconMS():
         ids_listos = {p.get("id") for p in listaListos}
         listaSuspendidos[:] = [p for p in listaSuspendidos if p.get("id") not in ids_listos]
         multiprogramacion = len(listaListos) + len(listaSuspendidos)
-        if DEBUG:
-            # invariant: no debe quedar ningún id compartido entre listas después del movimiento
-            assert len(ids_listos & {p.get("id") for p in listaSuspendidos}) == 0, "ID duplicado entre listaListos y listaSuspendidos"
         if not cambios:
             break
 
