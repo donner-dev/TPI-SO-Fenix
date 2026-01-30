@@ -240,7 +240,7 @@ def leer_procesos(csv_filename: str):
                     "t_arribo": int(t_arribo),
                     "t_arribo_MP": None, # <-- campo adicional para calculo de tiempos de retorno
                     "t_irrupcion": int(t_irrupcion),
-                    "tiempo_restante": int(t_irrupcion),
+                    "t_RestanteCPU": int(t_irrupcion),
                     "t_finalizacion": 0,
                     "total_retorno": None,
                     "t_ingreso": None,
@@ -328,15 +328,18 @@ def mover_aColaListo(procActual):
     procActual["admitido"] = True
     
     #Tiempo en que quedó esperando en la lista de nuevos.
-    if procActual["t_respuesta"] == None:
+    if procActual["t_respuesta"] is None:
         procActual["t_respuesta"] = T_Simulacion - procActual["t_arribo"]
     else: 
         procActual["t_respuesta"] = procActual.get("t_respuesta")
 
-    procActual["t_totalenColaListo"]= 0    
+    # Preservar el tiempo acumulado en la cola de listos (no reiniciarlo al re-admitir)
+    procActual.setdefault("t_totalenColaListo", 0)
+    # Mantener compatibilidad: asegurar que exista el campo `t_RestanteCPU`
+    procActual.setdefault("t_RestanteCPU", procActual.get("t_irrupcion", 0))
 
-    #preparar tiempo de ingreso: Instante en que el sim. lo acomoda en mem. secundaria
-    if procActual["t_ingreso"] == None:
+    # preparar tiempo de ingreso: instante en que el sim. lo acomoda en memoria principal o secundaria
+    if procActual["t_ingreso"] is None:
         procActual["t_ingreso"] = T_Simulacion
     else:
         procActual["t_ingreso"] = procActual.get("t_ingreso")
@@ -357,16 +360,20 @@ def mover_aColaSuspendido(procActual):
     procActual["admitido"] = True
     
     #Tiempo en que quedó esperando en la lista de nuevos.
-    if procActual["t_respuesta"] == None:
+    if procActual["t_respuesta"] is None:
         procActual["t_respuesta"] = T_Simulacion - procActual["t_arribo"]
     else: 
         procActual["t_respuesta"] = procActual.get("t_respuesta")
 
     #Guarda el instante en que ingresa al ámbito de la multiprogramación
-    if procActual["t_ingreso"] == None:
+    if procActual["t_ingreso"] is None:
         procActual["t_ingreso"] = T_Simulacion
     else:
         procActual["t_ingreso"] = procActual.get("t_ingreso")
+
+    # Defensive: preservar/asegurar contadores importantes para evitar pérdida de métricas
+    procActual.setdefault("t_totalenColaListo", procActual.get("t_totalenColaListo", 0))
+    procActual.setdefault("t_RestanteCPU", procActual.get("t_RestanteCPU", procActual.get("t_irrupcion", 0)))
 
     listaSuspendidos.append(procActual)
 
@@ -374,16 +381,22 @@ def mover_aColaSuspendido(procActual):
 def mandarTerminados(procActual,indiceMP):
     global T_Simulacion
     
-    #Marcar finalización
+    #Marcar finalización (usar campo único `t_finalizacion`)
     procActual["t_finalizacion"] = T_Simulacion
-    procActual["total_retorno"] = T_Simulacion - procActual["t_arribo_MP"] 
 
     #Hace que la partición esté disponible
-    listaMP[indiceMP]["Ocupado"]= False
-    
+    listaMP[indiceMP]["Ocupado"] = False
+
+    # Ensure required timing fields exist (defensive) — usar `t_finalizacion` como fuente de verdad
+    procActual.setdefault("t_respuesta", procActual.get("t_respuesta") if procActual.get("t_respuesta") is not None else (procActual.get("t_finalizacion", T_Simulacion) - procActual.get("t_arribo", T_Simulacion)))
+    procActual.setdefault("t_totalenColaListo", procActual.get("t_totalenColaListo", 0))
+
+    # total_retorno: tiempo desde que ingresó a MP hasta finalización (calcular desde t_finalizacion)
+    procActual["total_retorno"] = procActual.get("t_finalizacion", T_Simulacion) - procActual.get("t_arribo_MP", procActual.get("t_arribo", T_Simulacion))
+
     #agregar a la lista de terminados
     listaTerminados.append(procActual)
-    
+
     #quitar de la listaListos el proceso
     listaListos[:] = [p for p in listaListos if p["id"] != procActual["id"]]
 
@@ -391,7 +404,7 @@ def mandarTerminados(procActual,indiceMP):
 def BuscarSRTF() -> Optional[int]:
     """
     Busca el proceso con menor tiempo restante (SRTF) entre los listos que tengan
-    tiempo_restante > 0. Retorna el índice de la partición donde está alojado ese
+    `t_RestanteCPU` > 0. Retorna el índice de la partición donde está alojado ese
     proceso o None.
 
     ════════════════════════════════════════════════════════════════════════
@@ -412,10 +425,10 @@ def BuscarSRTF() -> Optional[int]:
        dict en listaListos)
     2. cargarProcesoAlojado(MP, puntero, aux) → MP[puntero]["Proceso_alojado"]
        = aux (MISMA REFERENCIA)
-    3. En ejecutarTodo(): proceso_actual["tiempo_restante"] -= 1 (modifica ambos:
-       listaListos Y MemoriaPrincipal simultáneamente porque son la misma referencia)
+    3. En ejecutarTodo(): proceso_actual["t_RestanteCPU"] -= 1 (modifica ambos:
+       listaListos y MemoriaPrincipal simultáneamente porque son la misma referencia)
     4. BuscarSRTF() busca por 'id' en listaListos, encuentra el proceso con menor
-       tiempo_restante, a ese proceso lo marca como en CPU colocando en TRUE el campo CPU que actua como bandera, y retorna el índice de su partición en MemoriaPrincipal.
+       `t_RestanteCPU`, a ese proceso lo marca como en CPU poniendo `CPU = True` y retorna el índice de su partición en MemoriaPrincipal.
     
     Esto es el puente entre:
     - FIFO (cola de admisión en listaListos)
@@ -425,12 +438,12 @@ def BuscarSRTF() -> Optional[int]:
     if len(listaListos) < 1:
         return None
     
-    #Busca proceso en la cola de turnos (lista de listos)
+    # Busca proceso en la cola de listos por menor tiempo restante (`t_RestanteCPU`)
     menorTR = float("inf")
     procesoElegido = None
     for proc in listaListos:
-        tr = proc.get("tiempo_restante", 0)
-        proc["CPU"] = False  #marcar que no está en CPU
+        tr = proc.get("t_RestanteCPU", 0)
+        proc["CPU"] = False  # marcar que no está en CPU
         if tr > 0 and tr < menorTR:
             menorTR = tr
             procesoElegido = proc
@@ -602,7 +615,7 @@ def buscarSiguiente():
 
 def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
     global banderaMostrarTablas
-    if proceso["tiempo_restante"] == 0:
+    if proceso.get("t_RestanteCPU", 0) == 0:
         banderaMostrarTablas = True
         print(f"El proceso {proceso['id']} ha finalizado su ejecución.")
         # Manda a terminados
@@ -665,7 +678,7 @@ def mostrarColaListos():  #ezequiel
                     str(p.get("t_irrupcion", "xxx")),
                     str(p.get("t_respuesta", "xxx")),
                     str(p.get("t_ingreso", "xxx")),
-                    str(p.get("tiempo_restante", "xxx")),
+                    str(p.get("t_RestanteCPU", "xxx")),
                     str(p.get("t_totalenColaListo", "xxx")),
                 )
         # si la lista no esta vacia pero el unico proceso esta en CPU
@@ -696,7 +709,7 @@ def mostrarCPU():  #ezequiel
                     str(proceso.get("id", "xxx")),
                     str(proceso.get("tamaño", "xxx")),
                     str(listaMP[particion_asignada]["Particion"] if particion_asignada is not None else "xxx"),
-                    str(proceso.get("tiempo_restante", "xxx")),
+                    str(proceso.get("t_RestanteCPU", "xxx")),
                 )
                 break
     else:
@@ -774,7 +787,7 @@ def mostrarColaSuspendidos():  #isabel
         table.add_column(h, justify="right")
     if listaSuspendidos:
         for p in listaSuspendidos:
-            table.add_row(*(str(p.get(k, "xxx")) for k in ["id", "t_arribo", "tamaño", "t_irrupcion", "t_respuesta", "t_ingreso", "tiempo_restante"]))
+            table.add_row(*(str(p.get(k, "xxx")) for k in ["id", "t_arribo", "tamaño", "t_irrupcion", "t_respuesta", "t_ingreso", "t_RestanteCPU"]))
     else:
         table.add_row(*["xxx"] * len(headers))
     console.print(table)
@@ -830,10 +843,9 @@ def mostrarInforme(): #agustin
     console = Console()
     table = Table(title="Procesos Terminados", show_lines=True)
 
-    #Sumatorias de tiempos para el informe final.
-    for i in range(len(listaTerminados)):
-        Sumatoria_TEspera += listaTerminados[i]["t_respuesta"]
-        Sumatoria_TRetorno += listaTerminados[i]["t_finalizacion"]
+    #Sumatorias de tiempos para el informe final. (usar duraciones, no instantes)
+    Sumatoria_TEspera = sum(p.get("t_respuesta", 0) for p in listaTerminados)
+    Sumatoria_TRetorno = sum(p.get("total_retorno", p.get("t_finalizacion", 0)) for p in listaTerminados)
 
     gotoxy(1,1)
     console.print("[bold underline grey70]Informe estadístico[/bold underline grey70]")
@@ -890,18 +902,18 @@ while len(listaTerminados) < len(listaNuevos):
 
     procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
 
-    while (procesoEjecucion is not None) and (procesoEjecucion["tiempo_restante"] > 0):
+    while (procesoEjecucion is not None) and (procesoEjecucion.get("t_RestanteCPU", 0) > 0):
         
         banderaMostrarTablas = False # bandera para mostrar tablas si hay cambios en admision o terminacion
         
-        # Ejecutar un ciclo de CPU
-        procesoEjecucion["tiempo_restante"] -= 1
+        # Ejecutar un ciclo de CPU (decrementar único contador estándar)
+        procesoEjecucion["t_RestanteCPU"] -= 1
         T_Simulacion += 1
         
         # Sumar tiempo de espera a los demas procesos en listaListos ya cargados para este ciclo
         for otrosProcesos in listaListos:
             if otrosProcesos["id"] != procesoEjecucion["id"]:
-                otrosProcesos["t_totalenColaListo"] += 1
+                otrosProcesos["t_totalenColaListo"] = otrosProcesos.get("t_totalenColaListo", 0) + 1
         
         # Verificar si llegó un nuevo proceso para admisión
         ADMICION_MULTI_5() #acomoda memoria si es necesario y luego termina de admitir
