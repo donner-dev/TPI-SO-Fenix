@@ -773,7 +773,7 @@ def mostrarColaSuspendidos():  #isabel
     
     console = Console()
     table = Table(title="Procesos en Memoria Secundaria --> Estado: 'Listo y Suspendido'", show_lines=True)
-    headers = ["ID Proceso", "Tiempo Arribo", "Tamaño", "Tiempo Irrupcion", "Tiempo de Respuesta", "Tiempo de Ingreso", "Tiempo Restante de CPU"]
+    headers = ["ID Proceso", "Tiempo Arribo", "Tamaño", "Tiempo Irrupcion", "Tiempo de Respuesta", "Tiempo de Ingreso", "Tiempo Restante de CPU", "Estado"]
     for h in headers:
         table.add_column(h, justify="right", style="yellow" if h == "ID Proceso" else "", no_wrap=False)
     if listaSuspendidos:
