@@ -241,7 +241,7 @@ def leer_procesos(csv_filename: str):
                     "t_arribo_MP": None, # <-- campo adicional para calculo de tiempos de retorno
                     "t_irrupcion": int(t_irrupcion),
                     "t_RestanteCPU": int(t_irrupcion),
-                    "t_finalizacion": 0,
+                    "t_finalizacion": None,
                     "total_retorno": None,
                     "t_ingreso": None,
                     "t_respuesta": None,
@@ -308,9 +308,12 @@ def AsignPartBestFit(procActual):
 
     #si la posicion p es distinta de -1, se escogió una partición apta
     if pos != -1:
-        listaMP[pos]["Fragmentacion Interna"]= listaMP[pos]["TamañoTotal"] - procActual["tamaño"]      
-        listaMP[pos]["Proceso_alojado"]= procActual
-        listaMP[pos]["Ocupado"]= True
+        listaMP[pos]["Fragmentacion Interna"] = listaMP[pos]["TamañoTotal"] - procActual["tamaño"]      
+        listaMP[pos]["Proceso_alojado"] = procActual
+        listaMP[pos]["Ocupado"] = True
+        # Registrar instante real en que el proceso queda ALOJADO en MP (si no estaba ya fijado)
+        if procActual.get("t_arribo_MP") is None:
+            procActual["t_arribo_MP"] = T_Simulacion
 
 def cabeEnAlgunaParticionLIBRE(proc):
     global listaMP
@@ -333,8 +336,11 @@ def mover_aColaListo(procActual):
     else: 
         procActual["t_respuesta"] = procActual.get("t_respuesta")
 
-    # Preservar el tiempo acumulado en la cola de listos (no reiniciarlo al re-admitir)
-    procActual.setdefault("t_totalenColaListo", 0)
+    if procActual["t_totalenColaListo"] is None:
+        procActual["t_totalenColaListo"] = 0
+    else: # Preservar el tiempo acumulado en la cola de listos (no reiniciarlo)
+        procActual["t_totalenColaListo"] = procActual.get("t_totalenColaListo")
+
     # Mantener compatibilidad: asegurar que exista el campo `t_RestanteCPU`
     procActual.setdefault("t_RestanteCPU", procActual.get("t_irrupcion", 0))
 
@@ -345,7 +351,10 @@ def mover_aColaListo(procActual):
         procActual["t_ingreso"] = procActual.get("t_ingreso")
 
     #preparar tiempo de arribo: cuando llega a memoria principal
-    procActual["t_arribo_MP"] = T_Simulacion
+    if procActual["t_ingreso"] is None:
+        procActual["t_arribo_MP"] = T_Simulacion
+    else:
+        procActual["t_arribo_MP"] = procActual.get("t_arribo_MP")
     #ingresa proceso a listaListos (cola de turnos)
     
     global aux
@@ -370,11 +379,7 @@ def mover_aColaSuspendido(procActual):
         procActual["t_ingreso"] = T_Simulacion
     else:
         procActual["t_ingreso"] = procActual.get("t_ingreso")
-
-    # Defensive: preservar/asegurar contadores importantes para evitar pérdida de métricas
-    procActual.setdefault("t_totalenColaListo", procActual.get("t_totalenColaListo", 0))
-    procActual.setdefault("t_RestanteCPU", procActual.get("t_RestanteCPU", procActual.get("t_irrupcion", 0)))
-
+    
     listaSuspendidos.append(procActual)
 
 
@@ -383,16 +388,20 @@ def mandarTerminados(procActual,indiceMP):
     
     #Marcar finalización (usar campo único `t_finalizacion`)
     procActual["t_finalizacion"] = T_Simulacion
-
+    procActual["CPU"] = False  # marcar que ya no está en CPU
+    procActual["t_respuesta"] = procActual.get("t_respuesta")
+    procActual["t_totalenColaListo"] = procActual.get("t_totalenColaListo")
     #Hace que la partición esté disponible
     listaMP[indiceMP]["Ocupado"] = False
 
-    # Ensure required timing fields exist (defensive) — usar `t_finalizacion` como fuente de verdad
-    procActual.setdefault("t_respuesta", procActual.get("t_respuesta") if procActual.get("t_respuesta") is not None else (procActual.get("t_finalizacion", T_Simulacion) - procActual.get("t_arribo", T_Simulacion)))
-    procActual.setdefault("t_totalenColaListo", procActual.get("t_totalenColaListo", 0))
+
+    # Normalizar/normalización defensiva de `t_arribo_MP` (cubrir casos donde la clave existe pero su valor es None)
+    if procActual.get("t_arribo_MP") is None:
+        procActual["t_arribo_MP"] = procActual.get("t_ingreso") if procActual.get("t_ingreso") is not None else procActual.get("t_arribo", T_Simulacion)
 
     # total_retorno: tiempo desde que ingresó a MP hasta finalización (calcular desde t_finalizacion)
-    procActual["total_retorno"] = procActual.get("t_finalizacion", T_Simulacion) - procActual.get("t_arribo_MP", procActual.get("t_arribo", T_Simulacion))
+    t_arribo_mp_val = procActual.get("t_arribo_MP", procActual.get("t_arribo", T_Simulacion))
+    procActual["total_retorno"] = int(procActual.get("t_finalizacion", T_Simulacion) - t_arribo_mp_val)
 
     #agregar a la lista de terminados
     listaTerminados.append(procActual)
@@ -931,7 +940,15 @@ while len(listaTerminados) < len(listaNuevos):
     # tiempo del simulador parejo con los procesos que van llegando para hacer la admision de ese instante
     
     ADMICION_MULTI_5()
-
+    if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
+            #Mostrar pantalla poner todas las tablas.
+            banderaMostrarTablas = False # resetear bandera para otro ciclo
+            MostrarTablas()
+            print(f"Tiempo de simulación actual: >>>>>>>>>>>>>>>> {T_Simulacion} (ut) <<<<<<<<<<<<<<<<")
+            print(f"Multiprogramación actual: >>>>>>>>>>>>>>>> {multiprogramacion} procesos <<<<<<<<<<<<<<<<")
+            print(f"presione cualquier tecla para continuar...")
+            msvcrt.getch()  # espera cualquier tecla
+            limpiar_pantalla()
     ########## EJECUCION #########
     #SEGUNDO buscar el proceso SRTF
     indice_procesoEjecucion = BuscarSRTF() # retorna el indice de la particion en memoria principal que contiene el proceso con menor tiempo restante
