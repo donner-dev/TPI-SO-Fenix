@@ -1,7 +1,7 @@
 ############################################ IMPORTS ############################################
 import csv
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Optional
 from rich.console import Console
 from rich.table import Table
 import msvcrt
@@ -622,6 +622,24 @@ def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
         mandarTerminados(proceso, indice_procesoEjecucion) # esta funcion tiene que copiar este proceso en la lista de terminados y removerlo de listos
         return True
 
+def actualizar_estado_Proceso(proceso: Dict) -> Optional[str]:
+    """
+    Devuelve una cadena con el estado actual del proceso según las listas.
+    """
+    global listaListos, listaSuspendidos, listaTerminados, listaNuevos
+
+    pid = proceso.get("id")
+    if any(p.get("id") == pid and p.get("CPU") for p in listaListos):
+        return "EN EJECUCION"
+    if any(p.get("id") == pid for p in listaListos):
+        return "LISTO"
+    if any(p.get("id") == pid for p in listaSuspendidos):
+        return "LISTO/SUSPENDIDO"
+    if any(p.get("id") == pid for p in listaTerminados):
+        return "TERMINADO"
+    if any(p.get("id") == pid for p in listaNuevos):
+        return "NUEVO"
+    return None
 
 ####################################### FUNCIONES "MOSTRAR_TABLAS" ##########################################
 def mostrarNuevos():  #agustin
@@ -861,10 +879,31 @@ def mostrarInforme(): #agustin
     print("\n")  
     console.print(f"[italic grey70]Simulación terminada...[/italic grey70]")
 
+def mostrarTablasActualizadas():
+    global listaNuevos
+    console = Console()
+      #renderizar la tablita hermosa con rich, ciclando los objetos en Procesos
+    table = Table(title="Procesos Cargados", show_lines=True)
+    table.add_column("ID Proceso", justify="right", style="yellow", no_wrap=True)
+    table.add_column("Tiempo Arribo", justify="right")
+    table.add_column("Tamaño",justify="right" )
+    table.add_column("Tiempo Irrupcion", justify="right")
+    table.add_column("ESTADO", justify="right")
+    for p in listaNuevos:
+        estadoActual= actualizar_estado_Proceso(p)
+        table.add_row( #medio tipo:  array[0] pero con los key del diccionario
+            str(p["id"]),
+            str(p["t_arribo"]),
+            str(p["tamaño"]),
+            str(p["t_irrupcion"]),
+            estadoActual
+        )
+    console.print(table)
+
 def MostrarTablas():
     """Muestra todas las tablas disponibles en el simulador"""
     limpiar_pantalla()
-    mostrarNuevos()
+    mostrarTablasActualizadas()
     mostrarMemoriaPrincipal()
     mostrarColaListos()
     mostrarCPU()
