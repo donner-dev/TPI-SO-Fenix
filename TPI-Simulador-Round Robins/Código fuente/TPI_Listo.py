@@ -984,7 +984,9 @@ while len(listaTerminados) < len(listaNuevos):
         # Manejo de cambio de contexto (cuando termina un proceso, busca otro para ejecutar)
         if (len(listaListos) > 0) and (procesoEjecucion is None):
             print(f"Cambio de contexto al siguiente proceso SRTF.")
-            indice_procesoEjecucion = BuscarSRTF()
+            indice_procesoEjecucion = BuscarSRTF()# este SRTF busca al siguiente proceso a ejecutar que viene a ser el que le sigue en orden al que termino
+            ADMICION_MULTI_5() # revisar si hay admision de nuevos procesos después del cambio de contexto para ocupar el espacio liberado
+             # si no hay procesos en listos vuelve al while mayor para un ciclo ocioso
             if indice_procesoEjecucion is None:
                 continue # vuelve al while mayor para un ciclo ocioso
             procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
@@ -994,7 +996,7 @@ while len(listaTerminados) < len(listaNuevos):
             break #vuelve al while mayor para un ciclo ocioso
 
         ADMICION_MULTI_5() # revisar si hay admision de nuevos procesos después del cambio de contexto para ocupar el espacio liberado
-        indice_procMasPrioridad = BuscarSRTF()
+        indice_procMasPrioridad = BuscarSRTF() # busca otro proceso para hacer una apropiacion de CPU
         
         # control de APROPIACION de CPU para la admision de nuevos procesos causado por ADMICION_MULTI_5
         if indice_procMasPrioridad is not None and procesoEjecucion is not None:     
@@ -1019,6 +1021,6 @@ while len(listaTerminados) < len(listaNuevos):
             print(f"presione cualquier tecla para continuar...")
             msvcrt.getch()  # espera cualquier tecla
             limpiar_pantalla()
-    #Informe final al terminar la simulación
-    mostrarInforme()
-    input("Presione ENTER para cerrar...")
+#Informe final al terminar la simulación
+mostrarInforme()
+input("Presione ENTER para cerrar...")
