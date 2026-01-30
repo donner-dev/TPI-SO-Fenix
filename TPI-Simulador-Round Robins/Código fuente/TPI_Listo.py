@@ -639,7 +639,7 @@ def mostrarColaListos():  #ezequiel
     console = Console()
     table = Table(title="Procesos en COLA de LISTOS --> Estado: 'Listo'", show_lines=True)
     cols = [
-        ("Orden", "yellow"),
+        ("Orden", None),
         ("ID Proceso", "yellow"),
         ("Tamaño", None),
         ("T. Arribo", None),
@@ -680,7 +680,7 @@ def mostrarCPU():  #ezequiel
     """ Muestra la tabla de procesos en CPU """
     console = Console()
     table = Table(title="Proceso utilizando CPU --> Estado: 'En Ejecución'", show_lines=True)
-    for h, style in [("ID Proceso", None), ("Tamaño", None), ("Particion", None), ("T. Restante de CPU", None)]:
+    for h, style in [("ID Proceso", "yellow"), ("Tamaño", None), ("Particion", None), ("T. Restante de CPU", None)]:
         table.add_column(h, justify="center", style=style or "", no_wrap=False)
     if listaListos:
         for proceso in listaListos:
@@ -725,15 +725,13 @@ def mostrarMemoriaPrincipal():  #agustin
     table = Table(title="Procesos en estado de Listo (En Memoria Principal)", show_lines=True)
 
     #Columnas
-    table.add_column("Partición", justify="right", style="yellow")
-    table.add_column("Tamaño Total", justify="right", style="yellow")
-    table.add_column("Dir. comienzo", justify="right", style="yellow")
-    table.add_column("Frag. Interna", justify="right", style="yellow")
+    table.add_column("Partición", justify="right")
+    table.add_column("Tamaño Total", justify="right")
+    table.add_column("Dir. comienzo", justify="right")
+    table.add_column("Frag. Interna", justify="right")
     table.add_column("ID Proceso", justify="center", style="yellow", no_wrap=True)
-    table.add_column("T. de Arribo", justify="center", style="yellow")
-    table.add_column("T. de Irrupcion", justify="center", style="yellow")
-    table.add_column("Dueño", justify="center", style="yellow")
-    table.add_column("Estado", justify="center", style="yellow")
+    table.add_column("Dueño", justify="center")
+    table.add_column("Estado", justify="center", style="bright_magenta")
 
     #Filas
     #Primero la fila del Sistema Operativo
@@ -741,8 +739,6 @@ def mostrarMemoriaPrincipal():  #agustin
         "0",        #Partición del SO
         "100",
         "451",      #Dir Comienzo
-        "-",
-        "-",
         "-",
         "-",
         "SO",
@@ -762,8 +758,6 @@ def mostrarMemoriaPrincipal():  #agustin
             str(listaMP[i]["dirComienzo"]),
             str(listaMP[i]["Fragmentacion Interna"]),
             str(proc.get("id", "-")),
-            str(proc.get("t_arribo", "-")),
-            str(proc.get("t_irrupcion", "-")),
             str(listaMP[i]["Dueño"]),
             str(estadoPart),
         )
@@ -795,17 +789,17 @@ def mostrarTerminados(): #agustin
     table = Table(title="Procesos Terminados", show_lines=True)
 
     #Columnas
-    table.add_column("Posicion", justify="center", style="yellow", no_wrap=True)
-    table.add_column("ID", justify="center", style="yellow", no_wrap=True)
-    table.add_column("Tamaño", justify="center", style="yellow", no_wrap=True)
-    table.add_column("T. de arribo", justify="center", style="yellow", no_wrap=True)
-    table.add_column("T. arribo a MP", justify="center", style="yellow", no_wrap=True)
-    table.add_column("T. irrupcion", justify="center", style="yellow", no_wrap=True)
-    table.add_column("T. retorno", justify="center", style="yellow", no_wrap=True)
-    table.add_column("T. ingreso", justify="center", style="yellow", no_wrap=True)
-    table.add_column("T. respuesta", justify="center", style="yellow", no_wrap=True)
-    table.add_column("T. total de retorno", justify="center", style="yellow", no_wrap=True)
-    table.add_column("T. total en listos", justify="center", style="yellow", no_wrap=True)
+    table.add_column("Posicion", justify="center", no_wrap=True)
+    table.add_column("ID", justify="center", no_wrap=True)
+    table.add_column("Tamaño", justify="center", no_wrap=True)
+    table.add_column("T. de arribo", justify="center", no_wrap=True)
+    table.add_column("T. arribo a MP", justify="center", no_wrap=True)
+    table.add_column("T. irrupcion", justify="center", no_wrap=True)
+    table.add_column("T. retorno", justify="center", no_wrap=True)
+    table.add_column("T. ingreso", justify="center", no_wrap=True)
+    table.add_column("T. respuesta", justify="center", no_wrap=True)
+    table.add_column("T. total de retorno", justify="center", no_wrap=True)
+    table.add_column("T. total en listos", justify="center", no_wrap=True)
    
     #Filas
     if len(listaTerminados) != 0:
