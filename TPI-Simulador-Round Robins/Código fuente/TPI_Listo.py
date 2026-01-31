@@ -652,7 +652,7 @@ def actualizar_estado_Proceso(proceso: Dict) -> Optional[str]:
 
 ####################################### FUNCIONES "MOSTRAR_TABLAS" ##########################################
 
-def mostrarTablasActualizadas():
+def mostrarTablasActualizadas(return_table=False):
     global listaNuevos
     console = Console()
       #renderizar la tablita hermosa con rich, ciclando los objetos en Procesos
@@ -671,7 +671,10 @@ def mostrarTablasActualizadas():
             str(p["t_irrupcion"]),
             estadoActual
         )
-    console.print(table)
+    if return_table:
+        return table
+    else:
+        console.print(table)
 
 def mostrarNuevos():  #agustin
     console = Console()
@@ -722,7 +725,7 @@ def mostrarColaListos():  #ezequiel
     console.print(table)
 
 
-def mostrarCPU():  #ezequiel
+def mostrarCPU(return_table=False):  #ezequiel
     """ Muestra la tabla de procesos en CPU """
     console = Console()
     table = Table(title="Proceso utilizando CPU --> Estado: 'En Ejecución'", show_lines=True)
@@ -747,10 +750,14 @@ def mostrarCPU():  #ezequiel
                 break
     else:
         table.add_row(*["xxx"] * 4)
-    console.print(table)
+    
+    if return_table:
+        return table
+    else:
+        console.print(table)
 
 
-def mostrarMemoriaPrincipal():  #agustin
+def mostrarMemoriaPrincipal(return_table=False):  #agustin
     """ Muestra la tabla de particiones de memoria principal """
     console = Console()
 
@@ -807,10 +814,14 @@ def mostrarMemoriaPrincipal():  #agustin
             str(listaMP[i]["Dueño"]),
             str(estadoPart),
         )
-    console.print(table)
+    
+    if return_table:
+        return table
+    else:
+        console.print(table)
 
 
-def mostrarColaSuspendidos():  #isabel
+def mostrarColaSuspendidos(return_table=False):  #isabel
     """ Muestra la tabla de procesos en estado de 'suspendido' """
     
     console = Console()
@@ -823,7 +834,11 @@ def mostrarColaSuspendidos():  #isabel
             table.add_row(*(str(p.get(k, "xxx")) for k in ["id", "t_arribo", "tamaño", "t_irrupcion", "t_respuesta", "t_ingreso", "t_RestanteCPU"]))
     else:
         table.add_row(*["xxx"] * len(headers))
-    console.print(table)
+    
+    if return_table:
+        return table
+    else:
+        console.print(table)
 
 
 def mostrarTerminados(): #agustin
@@ -900,11 +915,33 @@ def mostrarInforme(): #agustin
 def MostrarTablas():
     """Muestra todas las tablas disponibles en el simulador"""
     limpiar_pantalla()
-    mostrarTablasActualizadas()
-    mostrarMemoriaPrincipal()
+    console = Console()
+
+    # --- Captura de objetos ---
+    t_cargados = mostrarTablasActualizadas(return_table=True)
+    t_memoria = mostrarMemoriaPrincipal(return_table=True)
+    t_cpu = mostrarCPU(return_table=True)
+    t_suspendidos = mostrarColaSuspendidos(return_table=True)
+    
+    # --- NIVEL 1: Cargados y Memoria Principal (Uno al lado del otro) ---
+    grilla_superior = Table.grid(padding=4)
+    grilla_superior.add_column()
+    grilla_superior.add_column()
+    grilla_superior.add_row(t_cargados, t_memoria)
+
+    # --- NIVEL 2: CPU y Memoria Secundaria (Uno al lado del otro) ---
+    grilla_inferior = Table.grid(padding=4)
+    grilla_inferior.add_column()
+    grilla_inferior.add_column()
+    grilla_inferior.add_row(t_cpu, t_suspendidos)
+
+    # --- Impresión final ---
+    console.print(grilla_superior)
+    print("-" * 120)
+    console.print(grilla_inferior)
+    print("-" * 120)
+    
     mostrarColaListos()
-    mostrarCPU()
-    mostrarColaSuspendidos()
     mostrarTerminados()
 
 ####################################### MAIN PRINCIPAL ##########################################
