@@ -936,6 +936,7 @@ def MostrarTablas():
     grilla_inferior.add_row(t_cpu, t_suspendidos)
 
     # --- Impresión final ---
+    print() #un print adicional para que la tabla no esté tan pegada al borde superior
     console.print(grilla_superior)
     print("-" * 180)
     console.print(grilla_inferior)
