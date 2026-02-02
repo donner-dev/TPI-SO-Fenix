@@ -1,7 +1,7 @@
-###################################### IMPORTS ######################################
+############################################ IMPORTS ############################################
 import csv
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Optional
 from rich.console import Console
 from rich.table import Table
 import msvcrt
@@ -11,19 +11,10 @@ import os
 sys.path.append('..')
 
 
-""" Importé las funciones de SIMULADOR.py  para tenerlo modulado como se habia discutido (vamos viendo si queda bien o no) """
-import paquetes.LisandroRojas.funcionesLisandro_prolijo as Lis
-import paquetes.AgustinVeron.Menu as MA
-import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as FunArchivos
-
-#import paquetes.estado_global as vGlobal
-
 ###################################### VARIABLES GLOBALES ######################################
 listaNuevos=[]
 listaSuspendidos=[]
 listaListos=[]
-
-
 listaMP=[
     {
         "Particion": 1,
@@ -31,7 +22,7 @@ listaMP=[
         "Dueño": "usuario",
         "Proceso_alojado": {}, #MemoriaPrincipal[puntero]["Proceso_alojado"]= asigna VARIABLE_proceso_actual, asigna el diccionario completo del proceso
         "Fragmentacion Interna":0,
-        "dirComienzo": 151,
+        "dirComienzo": 201,
         "Ocupado": False
     },
     {
@@ -54,21 +45,21 @@ listaMP=[
     },
 ]
 listaTerminados=[]
-listaSuspendidos = []  ### * listaSuspendidos = []  ### * 
-T_Simulacion=0
+T_Simulacion=-1         #Empieza en -1 para que siempre se haga un incremento en el primer ciclo.
+T_CPU_ocioso=0         
 cantProcesosRestantes=0
 multiprogramacion=0
 aux=None
 banderaMostrarTablas=False
+listaNoAdmitidos=[]     #Para resguardar el id de aquellos procesos que no se admitieron por tamaño
 
-#variables de cálculo:
+#variables de cálculo estadístico:
 Sumatoria_TRetorno= 0
 Sumatoria_TEspera= 0
 
-paso1=None
-paso2=None
+############################### FUNCIONES PARA EL MENÚ ######################################
+#Algunas de las funciones de esta sección también se usan durante la ejecución del simulador.
 
-###################################### MENÚ ######################################
 """ Podemos revisar en donde van las funciones del menú, si acá o en otro archivo aparte?  mas que nada lo del render de logo- Donner """
 #Dimensiones de pantalla
 xMaxPantalla = 90
@@ -78,10 +69,10 @@ pos_opciones = (yMaxPantalla//2)+12
 pos_opciones2 = (yMaxPantalla//2)+6
 #Colores para strings
 NEGRITA = "\033[1m"
-AZUL="\033[44m" 
+AZUL="\033[34m"
 ROJO="\033[41m" 
 VERDE="\033[42m"
-AMARILLO="\033[43m"
+AMARILLO="\033[33m"
 NEGRO="\033[30m"
 BLANCO="\033[47m"
 RESET = "\033[0m"
@@ -110,56 +101,6 @@ def read_single_key_windows():
 def limpiar_buffer_entrada():
     while msvcrt.kbhit():
         msvcrt.getch()
-
-#Logo del engranaje
-def mostrar_logo():
-    '''
-    ---por cada linea---
-    Asigno string
-    Me posiciono; imprimo
-    '''
-    mensajeOp = "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)-1,3); print(mensajeOp)
-    mensajeOp = f"░{ROJO}++++++++++++++++++++{RESET}{NEGRO}%#{RESET}{VERDE}++++++++++++++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+13,4); print(mensajeOp)
-    mensajeOp = f"░{ROJO}++++++++++++++++++++{RESET}{NEGRO}%#{RESET}{VERDE}++++++++++++++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+13,5); print(mensajeOp)
-    mensajeOp = f"░{ROJO}+++++++++++++++++{RESET}{NEGRO}%*:{RESET}{BLANCO}..{RESET}{NEGRO}-%#{RESET}{VERDE}+++++++++++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,6); print(mensajeOp)
-    mensajeOp = f"░{ROJO}+++++++++{RESET}{NEGRO}%%%#+++*%{RESET}{BLANCO}.....{RESET}{NEGRO}*%++++%%%*{RESET}{VERDE}+++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,7); print(mensajeOp)
-    mensajeOp = f"░{ROJO}+++++++{RESET}{NEGRO}%%:{RESET}{BLANCO}...{RESET}{NEGRO}%%={RESET}{BLANCO}..........{RESET}{NEGRO}%%*{RESET}{BLANCO}...{RESET}{NEGRO}#%*{RESET}{VERDE}+++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,8); print(mensajeOp)
-    mensajeOp = f"░{ROJO}++++++{RESET}{NEGRO}%%{RESET}{BLANCO}.........................{RESET}{NEGRO}*%{RESET}{VERDE}+++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,9); print(mensajeOp)
-    mensajeOp = f"░{ROJO}++++++++{RESET}{NEGRO}%#{RESET}{BLANCO}......{RESET}{NEGRO}:%%%%%%%+{RESET}{BLANCO}.......{RESET}{NEGRO}%#{RESET}{VERDE}++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+31,10); print(mensajeOp)
-    mensajeOp = f"░{ROJO}+++++++{RESET}{NEGRO}%%{RESET}{BLANCO}.....{RESET}{NEGRO}#%*{RESET}{AZUL}++++++++{RESET}{NEGRO}%%:{RESET}{BLANCO}....{RESET}{NEGRO}=%{RESET}{VERDE}++++++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,11); print(mensajeOp)
-    mensajeOp = f"░{ROJO}+++{RESET}{NEGRO}%%%*={RESET}{BLANCO}.....{RESET}{NEGRO}%%{RESET}{AZUL}++++++++++++{RESET}{NEGRO}%:{RESET}{BLANCO}....{RESET}{NEGRO}:=#%%{RESET}{VERDE}++++{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,12); print(mensajeOp)
-    mensajeOp = f"░{NEGRO}%%%%#{RESET}{BLANCO}.......{RESET}{NEGRO}:%{RESET}{AZUL}+++++++++++++{RESET}{NEGRO}%%{RESET}{BLANCO}........{RESET}{NEGRO}%%%%%{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+31,13); print(mensajeOp)
-    mensajeOp = f"░{AZUL}+++{RESET}{NEGRO}%%{RESET}{BLANCO}........{RESET}{NEGRO}%*{RESET}{AZUL}++++++++++++{RESET}{NEGRO}%#{RESET}{BLANCO}........{RESET}{NEGRO}%{RESET}{AMARILLO}+---{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,14); print(mensajeOp)
-    mensajeOp = f"░{AZUL}+++++{RESET}{NEGRO}*#%#{RESET}{BLANCO}....{RESET}{NEGRO}:%#{RESET}{AZUL}++++++++++{RESET}{NEGRO}%%{RESET}{BLANCO}.....{RESET}{NEGRO}%%#{RESET}{AMARILLO}+-----{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,15); print(mensajeOp)
-    mensajeOp = f"░{AZUL}++++++++{RESET}{NEGRO}%%{RESET}{BLANCO}.....{RESET}{NEGRO}-%%#+++*%%#{RESET}{BLANCO}.....{RESET}{NEGRO}:%{RESET}{AMARILLO}+--------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+31,16); print(mensajeOp)
-    mensajeOp = f"░{AZUL}+++++++{RESET}{NEGRO}%#{RESET}{BLANCO}.......................{RESET}{NEGRO}:%%{RESET}{AMARILLO}-------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,17); print(mensajeOp)
-    mensajeOp = f"░{AZUL}++++++{RESET}{NEGRO}*%#{RESET}{BLANCO}....{RESET}{NEGRO}-:{RESET}{BLANCO}...........{RESET}{NEGRO}.+{RESET}{BLANCO}....{RESET}{NEGRO}:%%{RESET}{AMARILLO}-------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+40,18); print(mensajeOp)
-    mensajeOp = f"░{AZUL}++++++++{RESET}{NEGRO}*%%%%*+%%%{RESET}{BLANCO}.....={RESET}{NEGRO}%%*=%%#%%{RESET}{AMARILLO}---------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,19); print(mensajeOp)
-    mensajeOp = f"░{AZUL}+++++++++++++++++{RESET}{NEGRO}%-{RESET}{BLANCO}....{RESET}{NEGRO}%%{RESET}{AMARILLO}-----------------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+22,20); print(mensajeOp)
-    mensajeOp = f"░{AZUL}+++++++++++++++++{RESET}{NEGRO}*%%%%%%{RESET}{AMARILLO}------------------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+13,21); print(mensajeOp)
-    mensajeOp = f"░{AZUL}++++++++++++++++++++{RESET}{NEGRO}%*{RESET}{AMARILLO}--------------------{RESET}░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+13,22); print(mensajeOp)
-    mensajeOp = "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)-1,23); print(mensajeOp)
 
 #Logo de la carpeta
 def mostrar_logo2():
@@ -194,193 +135,92 @@ def mostrar_logo2():
     gotoxy(((xMaxPantalla-len(mensajeOp))//2),18); print(mensajeOp)
 
 
-def mostrar_menu():
-    mostrar_logo()
-    mensajeOp = f"{NEGRITA}SIMULADOR DE GESTIÓN Y PLANIFICACIÓN DE PROCESOS{RESET}"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2)+4,(yMaxPantalla//2)+8)
-    print(mensajeOp)
-    mensajeOp = "Presione una tecla para iniciar la simulación:"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2),(yMaxPantalla//2)+10)
-    print(mensajeOp)
-    mensajeOp = "Iniciar Simulacion"
-    gotoxy(((xMaxPantalla-len(mensajeOp))//2),pos_opciones)
-    print("\033[1;4;36m" + mensajeOp + "\033[0m")
-    gotoxy(3,yMaxPantalla-2)
-    print("V1.0 - ROUND ROBINS",end="")
-    gotoxy(xMaxPantalla-12,yMaxPantalla-2)
-    print("U.T.N FRRe",end="")
-    #posicion del puntero en la posicion maxima en x e y para dibujar toda la pantalla
-    gotoxy(xMaxPantalla,yMaxPantalla+2)
+def seleccionarCSV():
+    global AZUL
+    global AMARILLO
+    global RESET
 
+    #Obtiene los archivos CSV (devuelve Path absolutos)
+    if getattr(sys, 'frozen', False):
+        directorio_actual = Path(sys.executable).resolve().parent
+    else:
+        directorio_actual = Path(__file__).resolve().parent
 
-#Desplazamiento y selección en el menú principal
-def selec_opcion_menu1():
-    # Siempre devuelve la primera opción (0 + 1 = 1)
-    X_PUNTERO = ((xMaxPantalla // 2) - 11)  
+    archivos_csv = [p for p in sorted(directorio_actual.iterdir()) if p.suffix.lower() == ".csv"]
 
-    # Dibujar directamente el puntero en la primera opción
-    gotoxy(X_PUNTERO, pos_opciones)
-    print("▶")
+    if not archivos_csv:
+        gotoxy(20,22)
+        print("No se encontraron archivos CSV en el directorio.")
+        gotoxy(10,23)
+        print("Coloque un archivo .csv en el directorio y vuelva a abrir el programa.")
+        msvcrt.getch()
+        return None
 
-    # Esperar a que se presione Enter
-    while True:
-        tecla = read_single_key_windows()
-        if tecla == TECLA_ENTER:
-            break
+    console = Console()
+    gotoxy(34,20)
+    console.print(f"[bold italic grey70]Seleccione un archivo...[/bold italic grey70]")
 
-    # Devuelve siempre 1
-    return 1
-
-#Desplazamiento y selección del menú para cargar procesos
-def selec_opcion_menu2():
-    limpiar_pantalla()
-    mostrar_logo2()
-    for y in range(1, yMaxPantalla):
-        for x in range(1, xMaxPantalla):
-            if (x == 1) or (x == xMaxPantalla-1):
-                gotoxy(x,y)
-                print("▓", end="")
-            if (y == 1) or (y == yMaxPantalla-1):
-                gotoxy(x,y)
-                print("▓", end="")
-    
     mensajeOp = "Use las flechas (⬆︎ ⬇︎) y presione (Enter)"
-    gotoxy((xMaxPantalla-len(mensajeOp))//2+2,yMaxPantalla//2+4)
+    gotoxy((xMaxPantalla-len(mensajeOp))//2+1, yMaxPantalla//2+5)
     print(mensajeOp)
-    mensajeOp = "(1)-Cargar procesos mediante archivo (.csv)"
-    gotoxy((xMaxPantalla-len(mensajeOp))//2,yMaxPantalla//2+6)
-    print(mensajeOp)
-    mensajeOp = "(2)-Carga manual de procesos"
-    gotoxy((xMaxPantalla-len(mensajeOp))//2,yMaxPantalla//2+7)
-    print(mensajeOp)
-    # El índice de la opción seleccionada (0: Archivo, 1: Manual)
+
+    pos_opciones = yMaxPantalla//2+6
+    for i, archivo in enumerate(archivos_csv, start=1):
+        gotoxy(37, pos_opciones+i)
+        print(f"{AZUL}{i}. {AMARILLO}{archivo.name}{RESET}")
+
     pos_puntero = 0
     tecla = ''
-    NUM_OPCIONES = 2 
-    X_PUNTERO = (xMaxPantalla // 2) - 24 
+    NUM_OPCIONES = len(archivos_csv)
+    X_PUNTERO = (xMaxPantalla // 2) - 30
+
     while True:
-        # 1) Borrar el puntero de la posición anterior
         pos_puntero_ant = pos_puntero
-        # 2) Lectura de tecla (Espera activa por un input)
         tecla = read_single_key_windows()
-        # 3) Lógica de movimiento (Solo se ejecuta si se presionó una tecla válida)
+
         if tecla == TECLA_ARRIBA:
             pos_puntero = (pos_puntero - 1) % NUM_OPCIONES
         elif tecla == TECLA_ABAJO:
             pos_puntero = (pos_puntero + 1) % NUM_OPCIONES
         elif tecla == TECLA_ENTER:
-            # Sale del bucle cuando se presiona Enter
-            break 
-        # 4. Redibujar Puntero (Solo si la posición cambió o si se leyó una tecla)
+            # Devuelve un Path absoluto al archivo seleccionado
+            return archivos_csv[pos_puntero]
+
         if tecla:
-            # Borrar puntero antiguo: Imprimir un espacio ' ' en la posición vertical anterior.
-            gotoxy(X_PUNTERO, pos_opciones2 + pos_puntero_ant)
-            print(" ", end="", flush=True) 
-            # Dibujar puntero nuevo: Imprimir la flecha '▶' en la nueva posición.
-            gotoxy(X_PUNTERO, pos_opciones2 + pos_puntero)
+            gotoxy(X_PUNTERO, pos_opciones + pos_puntero_ant + 1)
+            print(" ", end="", flush=True)
+            gotoxy(X_PUNTERO, pos_opciones + pos_puntero + 1)
             print("▶", end="", flush=True)
-        # importante: Mover el cursor al final de la pantalla después de redibujar
-        # para que el próximo "print" del sistema operativo no arruine el menú.
+
         gotoxy(xMaxPantalla, yMaxPantalla + 2)
 
-       
-    return pos_puntero + 1 # Devuelve 1, 2, o 3 (el número de opción)
 
-def carga_manual_procesos(): 
-    limpiar_pantalla()
-    global cantProcesosRestantes
-    """ carga procesos manualmente y devuelve una lista de objetos Proceso """
-    procesos = []
-    valid_count = 0
-    ids_usados=set() #para evitar repetidos
-    print("Se aceptarán hasta 10 procesos. Ingrese los datos solicitados.")
-    while valid_count < 10:
-        print(f"\n---Ingrese datos del proceso {valid_count+1}: ---")
-        id_proceso = input("ID Proceso: ")
-        if not id_proceso:
-            print("El ID del proceso no puede estar vacío.")
-            continue
-        if id_proceso in ids_usados:
-            print(f"Error: El ID '{id_proceso}' ya ha sido ingresado. Intente con otro.")
-            continue
-        
-        try:
-            tamaño = int(input("Tamaño (en KB, max 250): "))
-            t_arribo = int(input("Tiempo de Arribo (entero no negativo): "))
-            t_irrupcion = int(input("Tiempo de Irrupción (entero positivo): "))
-
-            if tamaño <= 0 or t_arribo < 0 or t_irrupcion <= 0:
-                 print("Error: El tamaño y la irrupción deben ser positivos. El arribo no debe ser negativo.")
-                 continue
-            
-
-            if tamaño > 250:
-                print("El tamaño del proceso excede la capacidad máxima permitida (250 KB). Intente nuevamente.")
-                continue
-
-        except ValueError:
-            print("Error: Se esperaba un número entero para tamaño, arribo o irrupción.")
-            continue
-
-        
-        proceso={ # formato diccionario
-                "id": str(id_proceso),
-                "tamaño": int(tamaño),
-                "t_arribo": int(t_arribo),
-                "t_arribo_MP": None,
-                "t_irrupcion" : int(t_irrupcion),
-                "tiempo_restante":0, 
-                "t_finalizacion":0,
-                "t_retorno": 0,
-                "total_retorno": 0,
-                "t_ingreso": 0,
-                "t_respuesta": 0,           #Tiempo de espera en lista de nuevos.
-                "t_totalenColaListo": 0,
-                "bandera_baja_logica": False,
-                "admitido": False
-            }
-        procesos.append(proceso)
-        ids_usados.add(id_proceso) # Añadir el ID al conjunto de usados
-        valid_count += 1
-
-    procesos.sort(key=lambda p: p["t_arribo"])
-
-    cantProcesosRestantes=valid_count
-    
-    return procesos
-
-
-def ejecutarMenu():
-    global paso1
-    global paso2
-    limpiar_pantalla()
-    mostrar_menu()
-    limpiar_buffer_entrada()
-    paso1 = selec_opcion_menu1()
-    if paso1 == 1:
-        paso2 = selec_opcion_menu2()
-    elif paso1 == 2:
-        paso2 = selec_opcion_menu2()
-    elif paso1 == 3:
-        limpiar_pantalla()
-        sys.exit()
-    
-
-
-def leer_procesos(csv_filename: str):
-    """Lee el CSV y devuelve una LISTA de procesos (diccionarios) ordenados por t_arribo"""
-    
-    #csv_path = Path(__file__).resolve().parent / csv_filename
-    csv_path = Path.cwd() / csv_filename
-    nuevos = []  # lista de procesos
+def leer_procesos(csv_filename):
+    """Lee el CSV y devuelve una LISTA de procesos.
+    csv_filename puede ser:
+      - Path o str absoluto
+      - nombre relativo (se busca junto al script o al .exe cuando esté frozen)
+      - '-' para leer desde stdin (opcional, por tubería)
+    """
+    nuevos = []
     valid_count = 0
 
-    # Verificar si el archivo existe
-    if not csv_path.exists():
-        return []  # devolvemos lista vacía para que el simulador no rompa
+    # soporte stdin
+    if isinstance(csv_filename, str) and csv_filename == "-":
+        reader = csv.reader(sys.stdin, delimiter=',')
+        iterator = reader
+    else:
+        csv_path = Path(csv_filename)
+        if not csv_path.is_absolute():
+            base = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
+            csv_path = (base / csv_path).resolve()
 
-    with csv_path.open(mode="r", newline="", encoding="utf-8") as f:
+        if not csv_path.exists():
+            return []  # no romper el simulador si no existe
+
+        f = csv_path.open(mode="r", newline="", encoding="utf-8")
         reader = csv.reader(f, delimiter=',')
+        iterator = reader
 
         for row_number, row in enumerate(reader, start=1):
             if not row:
@@ -397,7 +237,7 @@ def leer_procesos(csv_filename: str):
             try:
                 tamaño_int = int(tamaño)
                 if tamaño_int > 250:
-                    print(f"Proceso {id_proceso} descartado: tamaño {tamaño_int} excede el máximo permitido (250).")
+                    listaNoAdmitidos.append(id_proceso)
                     continue  # salta este proceso y no lo agrega
 
                 proceso = {
@@ -406,14 +246,12 @@ def leer_procesos(csv_filename: str):
                     "t_arribo": int(t_arribo),
                     "t_arribo_MP": None, # <-- campo adicional para calculo de tiempos de retorno
                     "t_irrupcion": int(t_irrupcion),
-                    "tiempo_restante": int(t_irrupcion),
-                    "t_finalizacion": 0,
-                    "t_retorno": 0,
+                    "t_RestanteCPU": int(t_irrupcion),
+                    "t_finalizacion": None,
                     "total_retorno": None,
                     "t_ingreso": None,
                     "t_respuesta": None,
                     "t_totalenColaListo": 0,
-                    "bandera_baja_logica": False,
                     "admitido": False
                 }
             except ValueError as e:
@@ -432,8 +270,32 @@ def leer_procesos(csv_filename: str):
 
     return lista_procesos_ordenados
 
+def ejecutarMenu():
+    global listaNuevos
+    
+    #Bordes y texto 
+    limpiar_pantalla()
+    for y in range(1, yMaxPantalla):
+        for x in range(1, xMaxPantalla):
+            if (x == 1) or (x == xMaxPantalla-1):
+                gotoxy(x,y)
+                print("▓", end="")
+            if (y == 1) or (y == yMaxPantalla-1):
+                gotoxy(x,y)
+                print("▓", end="")
+    mostrar_logo2()
+
+
+    #Carga de archivo CSV
+    nombreArchivoCSV = seleccionarCSV()
+    listaNuevos = leer_procesos(nombreArchivoCSV)
+    limpiar_pantalla()
+
+
+################################ FUNCIONES PARA LA EJECUCIÓN ####################################
 
 def MPllena():
+    """Control necesario para saber si la memoria principal está ocupada y/o disponible para siquiera pensar en admitir un proceso"""
     for p in range(len(listaMP)):
         if listaMP[p]["Ocupado"] == False:
             return False
@@ -452,11 +314,18 @@ def AsignPartBestFit(procActual):
 
     #si la posicion p es distinta de -1, se escogió una partición apta
     if pos != -1:
-        listaMP[pos]["Fragmentacion Interna"]= listaMP[pos]["TamañoTotal"] - procActual["tamaño"]      
-        listaMP[pos]["Proceso_alojado"]= procActual
-        listaMP[pos]["Ocupado"]= True
+        listaMP[pos]["Fragmentacion Interna"] = listaMP[pos]["TamañoTotal"] - procActual["tamaño"]      
+        listaMP[pos]["Proceso_alojado"] = procActual
+        listaMP[pos]["Ocupado"] = True
+        # Registrar instante real en que el proceso queda ALOJADO en MP (si no estaba ya fijado)
+        if procActual.get("t_arribo_MP") is None:
+            procActual["t_arribo_MP"] = T_Simulacion
 
-def cabeEnAlgunaParticionLIBRE(listaMP,proc):
+def cabeEnAlgunaParticionLIBRE(proc):
+    """Control adicional necesario para saber si es factible admitir el proceso, previendo si cabe en almenos una partición"""
+
+    global listaMP
+
     for p in range(len(listaMP)):
         difTamaño= listaMP[p]["TamañoTotal"] - proc["tamaño"]
         if ((difTamaño >= 0) and (listaMP[p]["Ocupado"] == False)):
@@ -465,27 +334,38 @@ def cabeEnAlgunaParticionLIBRE(listaMP,proc):
 
 
 def mover_aColaListo(procActual):
+    """Se mueven procesos a la cola de listos mediante FIFO, de aquellos que también están en MP"""
+    
     global T_Simulacion
 
     #Proceso entró en ámbito de multiprogramación
-    procActual["bandera_baja_logica"] = True
+    procActual["admitido"] = True
     
     #Tiempo en que quedó esperando en la lista de nuevos.
-    if procActual["t_respuesta"] == None:
+    if procActual["t_respuesta"] is None:
         procActual["t_respuesta"] = T_Simulacion - procActual["t_arribo"]
     else: 
         procActual["t_respuesta"] = procActual.get("t_respuesta")
 
-    procActual["t_totalenColaListo"]= 0    
+    if procActual["t_totalenColaListo"] is None:
+        procActual["t_totalenColaListo"] = 0
+    else: # Preservar el tiempo acumulado en la cola de listos (no reiniciarlo)
+        procActual["t_totalenColaListo"] = procActual.get("t_totalenColaListo")
 
-    #preparar tiempo de ingreso: Instante en que el sim. lo acomoda en mem. secundaria
-    if procActual["t_ingreso"] == None:
+    # Mantener compatibilidad: asegurar que exista el campo `t_RestanteCPU`
+    procActual.setdefault("t_RestanteCPU", procActual.get("t_irrupcion", 0))
+
+    # preparar tiempo de ingreso: instante en que el sim. lo acomoda en memoria principal o secundaria
+    if procActual["t_ingreso"] is None:
         procActual["t_ingreso"] = T_Simulacion
     else:
         procActual["t_ingreso"] = procActual.get("t_ingreso")
 
     #preparar tiempo de arribo: cuando llega a memoria principal
-    procActual["t_arribo_MP"] = T_Simulacion
+    if procActual["t_ingreso"] is None:
+        procActual["t_arribo_MP"] = T_Simulacion
+    else:
+        procActual["t_arribo_MP"] = procActual.get("t_arribo_MP")
     #ingresa proceso a listaListos (cola de turnos)
     
     global aux
@@ -497,47 +377,54 @@ def mover_aColaSuspendido(procActual):
     global T_Simulacion
 
     #Proceso entró en ámbito de multiprogramación
-    procActual["bandera_baja_logica"] = True
+    procActual["admitido"] = True
     
     #Tiempo en que quedó esperando en la lista de nuevos.
-    if procActual["t_respuesta"] == None:
+    if procActual["t_respuesta"] is None:
         procActual["t_respuesta"] = T_Simulacion - procActual["t_arribo"]
     else: 
         procActual["t_respuesta"] = procActual.get("t_respuesta")
 
     #Guarda el instante en que ingresa al ámbito de la multiprogramación
-    if procActual["t_ingreso"] == None:
+    if procActual["t_ingreso"] is None:
         procActual["t_ingreso"] = T_Simulacion
     else:
         procActual["t_ingreso"] = procActual.get("t_ingreso")
-
+    
     listaSuspendidos.append(procActual)
 
 
 def mandarTerminados(procActual,indiceMP):
     global T_Simulacion
     
-    #Marcar finalización
+    #Marcar finalización (usar campo único `t_finalizacion`)
     procActual["t_finalizacion"] = T_Simulacion
-    procActual["total_retorno"] = T_Simulacion - procActual["t_arribo_MP"] 
-
+    procActual["CPU"] = False  # marcar que ya no está en CPU
+    procActual["t_respuesta"] = procActual.get("t_respuesta")
+    procActual["t_totalenColaListo"] = procActual.get("t_totalenColaListo")
     #Hace que la partición esté disponible
-    listaMP[indiceMP]["Ocupado"]= False
-    
+    listaMP[indiceMP]["Ocupado"] = False
+
+
+    # Normalizar/normalización defensiva de `t_arribo_MP` (cubrir casos donde la clave existe pero su valor es None)
+    if procActual.get("t_arribo_MP") is None:
+        procActual["t_arribo_MP"] = procActual.get("t_ingreso") if procActual.get("t_ingreso") is not None else procActual.get("t_arribo", T_Simulacion)
+
+    # total_retorno: tiempo desde que ingresó a MP hasta finalización (calcular desde t_finalizacion)
+    t_arribo_mp_val = procActual.get("t_arribo_MP", procActual.get("t_arribo", T_Simulacion))
+    procActual["total_retorno"] = int(procActual.get("t_finalizacion", T_Simulacion) - t_arribo_mp_val)
+
     #agregar a la lista de terminados
     listaTerminados.append(procActual)
-    
+
     #quitar de la listaListos el proceso
-    for p in listaListos():
-        if p["id"] == procActual["id"]:
-            listaListos.pop(procActual)
-            break
+    listaListos[:] = [p for p in listaListos if p["id"] != procActual["id"]]
 
-
+#Planif. corto plazo SRTF
 def BuscarSRTF() -> Optional[int]:
     """
     Busca el proceso con menor tiempo restante (SRTF) entre los listos que tengan
-    t_RestanteCPU > 0. Retorna el índice de la partición donde está alojado ese
+    `t_RestanteCPU` > 0. Retorna el índice de la partición donde está alojado ese
     proceso o None.
 
     ════════════════════════════════════════════════════════════════════════
@@ -559,9 +446,9 @@ def BuscarSRTF() -> Optional[int]:
     2. cargarProcesoAlojado(MP, puntero, aux) → MP[puntero]["Proceso_alojado"]
        = aux (MISMA REFERENCIA)
     3. En ejecutarTodo(): proceso_actual["t_RestanteCPU"] -= 1 (modifica ambos:
-       listaListos Y MemoriaPrincipal simultáneamente porque son la misma referencia)
+       listaListos y MemoriaPrincipal simultáneamente porque son la misma referencia)
     4. BuscarSRTF() busca por 'id' en listaListos, encuentra el proceso con menor
-       t_RestanteCPU, a ese proceso lo marca como en CPU colocando en TRUE el campo CPU que actua como bandera, y retorna el índice de su partición en MemoriaPrincipal.
+       `t_RestanteCPU`, a ese proceso lo marca como en CPU poniendo `CPU = True` y retorna el índice de su partición en MemoriaPrincipal.
     
     Esto es el puente entre:
     - FIFO (cola de admisión en listaListos)
@@ -571,12 +458,12 @@ def BuscarSRTF() -> Optional[int]:
     if len(listaListos) < 1:
         return None
     
-    #Busca proceso en la cola de turnos (lista de listos)
+    # Busca proceso en la cola de listos por menor tiempo restante (`t_RestanteCPU`)
     menorTR = float("inf")
     procesoElegido = None
     for proc in listaListos:
         tr = proc.get("t_RestanteCPU", 0)
-        proc["CPU"] = False  #marcar que no está en CPU
+        proc["CPU"] = False  # marcar que no está en CPU
         if tr > 0 and tr < menorTR:
             menorTR = tr
             procesoElegido = proc
@@ -592,7 +479,6 @@ def BuscarSRTF() -> Optional[int]:
         if proc_alojado and proc_alojado.get("id") == proceso_id:
             return i
     return None
-
 
 def CARGAR_MPconMS():
     while len(listaListos) < 3:
@@ -629,7 +515,7 @@ def ADMICION_MULTI_5():
        suspendidos entran primero a MP.
     
     2. Luego, recorre listaProcesos en orden (FIFO):
-       - Si t_arribo <= T_simulador y bandera_baja_logica == False:
+       - Si t_arribo <= T_Simulacion y admitido == False:
          a) Si cabe en MP: mover_aColaListo(proceso) + cargarProcesoAlojado()
          b) Si NO cabe: mover_aColaSuspendido(proceso)
        - Se detiene cuando multiprogramacion >= 5
@@ -647,18 +533,21 @@ def ADMICION_MULTI_5():
     if multiprogramacion >= 5:
         return
 
+    #Planif. medio plazo
     #si listaListos menor a 3 y listaSuspendidos no vacía 
     if len(listaListos) < 3 and listaSuspendidos:
         CARGAR_MPconMS()
 
+    #Planif. largo Plazo + FIFO
     while multiprogramacion < 5:
         cambios = False
         for proceso in listaNuevos:
-            if proceso.get("bandera_baja_logica") is False and proceso.get("t_arribo") <= T_simulador:
-                if len(listaListos) < 3 and cabeEnAlgunaParticionLIBRE(proceso):
+            if (proceso.get("admitido") is False) and (proceso.get("t_arribo") <= T_Simulacion):
+                if (len(listaListos) < 3) and cabeEnAlgunaParticionLIBRE(proceso):
                     mover_aColaListo(proceso)
                     AsignPartBestFit(aux)
                     cambios = True
+                #elif not cabeEnAlgunaParticionLIBRE(proceso):
                 else:
                     mover_aColaSuspendido(proceso)
                     cambios = True
@@ -680,6 +569,7 @@ def CiclosOciosos(proceso_siguiente: dict):
     """
     global multiprogramacion
     global T_Simulacion
+    global T_CPU_ocioso
 
     # recalcular multiprogramacion
     multiprogramacion = len(listaListos) + len(listaSuspendidos)
@@ -695,11 +585,11 @@ def CiclosOciosos(proceso_siguiente: dict):
     if t_arribo is None:
         return
 
-    if t_arribo >= T_simulador:
+    if t_arribo >= T_Simulacion:
         multiprogramacion = len(listaListos) + len(listaSuspendidos)
-        avanzar = t_arribo - T_simulador
+        avanzar = t_arribo - T_Simulacion
         T_CPU_ocioso += avanzar
-        T_simulador = t_arribo
+        T_Simulacion = t_arribo
         multiprogramacion = len(listaListos) + len(listaSuspendidos)
 
 def buscarSiguiente():
@@ -710,7 +600,7 @@ def buscarSiguiente():
     ════════════════════════════════════════════════════════════════════════
     ORDEN DE BÚSQUEDA (FIFO en listaProcesos)
     ════════════════════════════════════════════════════════════════════════
-    1. Procesos con `bandera_baja_logica` == False y `t_arribo` <= tiempo
+    1. Procesos con `admitido` == False y `t_arribo` <= tiempo
        actual (procesos ya arribados y no ingresados).
     2. Procesos cuyo `t_arribo` coincide con el instante actual.
     3. Si no hay ninguno, retorna el primer proceso futuro (próximo arribo).
@@ -719,7 +609,7 @@ def buscarSiguiente():
     CONCEPTO FIFO AQUÍ
     ════════════════════════════════════════════════════════════════════════
     - Recorre listaProcesos secuencialmente (como en un archivo CSV FIFO).
-    - Los primeros procesos que se encuentran con t_arribo <= T_simulador
+    - Los primeros procesos que se encuentran con t_arribo <= T_Simulacion
       son retornados para admisión.
     - buscarSiguiente() actúa como "visor FIFO": devuelve el próximo proceso
       que necesita atención de admisión.
@@ -733,67 +623,378 @@ def buscarSiguiente():
     # primero pendientes ya arribados pero sin ingresar o el proceso que arribo en este ciclo
     pendiente=None
     for p in listaNuevos:
-        if (p.get("bandera_baja_logica") is False) and (p.get("t_arribo") <= T_simulador):
+        if (p.get("admitido") is False) and (p.get("t_arribo") <= T_Simulacion):
             pendiente=p
             return pendiente
  
     # próximo arribo futuro
     for p in listaNuevos:
-        if (p.get("t_arribo") > T_simulador) and (p.get("bandera_baja_logica") is False):
+        if (p.get("t_arribo") > T_Simulacion) and (p.get("admitido") is False):
             #print(f"Busqueda del siguiente encontró un proceso del futuro {p}")
             return p
     return None
 
 def detectar_terminacion(proceso, indice_procesoEjecucion) -> bool:
     global banderaMostrarTablas
-    if proceso["tiempo_restante"] == 0:
+    if proceso.get("t_RestanteCPU", 0) == 0:
         banderaMostrarTablas = True
         print(f"El proceso {proceso['id']} ha finalizado su ejecución.")
         # Manda a terminados
         mandarTerminados(proceso, indice_procesoEjecucion) # esta funcion tiene que copiar este proceso en la lista de terminados y removerlo de listos
         return True
 
+def actualizar_estado_Proceso(proceso: Dict) -> Optional[str]:
+    """
+    Devuelve una cadena con el estado actual del proceso según las listas.
+    """
+    global listaListos, listaSuspendidos, listaTerminados, listaNuevos
 
-################################# FUNCIONES MOSTRARTABLAS ################################
+    pid = proceso.get("id")
+    if any(p.get("id") == pid and p.get("CPU") for p in listaListos):
+        return "EN EJECUCION"
+    if any(p.get("id") == pid for p in listaListos):
+        return "LISTO"
+    if any(p.get("id") == pid for p in listaSuspendidos):
+        return "LISTO/SUSPENDIDO"
+    if any(p.get("id") == pid for p in listaTerminados):
+        return "TERMINADO"
+    if any(p.get("id") == pid for p in listaNuevos):
+        return "NUEVO"
+    return None
+
+####################################### FUNCIONES "MOSTRAR_TABLAS" ##########################################
+
+def mostrarTablasActualizadas(return_table=False):
+    global listaNuevos
+    console = Console()
+      #renderizar la tablita hermosa con rich, ciclando los objetos en Procesos
+    table = Table(title="Procesos Cargados", show_lines=True)
+    table.add_column("ID Proceso", justify="right", style="yellow", no_wrap=True)
+    table.add_column("Tiempo Arribo", justify="right")
+    table.add_column("Tamaño",justify="right" )
+    table.add_column("Tiempo Irrupcion", justify="right")
+    table.add_column("Estado del Proceso", justify="right")
+    for p in listaNuevos:
+        estadoActual= actualizar_estado_Proceso(p)
+        table.add_row( #medio tipo:  array[0] pero con los key del diccionario
+            str(p["id"]),
+            str(p["t_arribo"]),
+            str(p["tamaño"]),
+            str(p["t_irrupcion"]),
+            estadoActual
+        )
+    if return_table:
+        return table
+    else:
+        console.print(table)
+
+def mostrarNuevos():  #agustin
+    console = Console()
+    mostrarTablasActualizadas()
+    global listaNoAdmitidos
+    if len(listaNoAdmitidos) > 0:
+        print(f"\033[31mAVISO: No se admitieron ({len(listaNoAdmitidos)}) procesos\033[0m")
+        print(f"\033[31mRAZÓN: Excedieron el tamaño máximo permitido (250kb)\033[0m")
+        print(f"\033[31mProcesos no admitidos: {', '.join(listaNoAdmitidos)}\033[0m")
+    if len(listaNuevos) == 0:
+        print()
+        limpiar_pantalla()
+        print(f"\033[31mAVISO: NO SE CARGÓ NINGÚN PROCESO EN EL ARCHIVO\033[0m")
+        print("Reinicie el simulador y pruebe con otro archivo.")
+        msvcrt.getch()  # espera cualquier tecla
+        sys.exit()
+
+    print()
+    console.print(f"[italic grey70]Archivo leído exitosamente![/italic grey70]")
+    console.print(f"[italic grey70]Cant. procesos cargados: {len(listaNuevos)}.[/italic grey70]")
+    print()
+    console.print(f"[italic grey70]Presione [Enter] para continuar...[/italic grey70]")
+
 def mostrarColaListos():  #ezequiel
     """ Muestra la tabla de procesos en lista de listos """
-    
-def mostrarCPU():  #ezequiel
-    """ Muestra la tabla de procesos en CPU """
-
-def mostrarMemoriaPrincipal():  #agustin
-    """ Muestra la tabla de particiones de memoria principal """
-
-def mostrarColaSuspendidos():  #isabel
     console = Console()
-    table = Table(title=" [ Procesos en Memoria Secundaria --> Estado: 'Listo y Suspendido' ]", show_lines=True)
-    headers = ["ID Proceso", "Tiempo Arribo", "Tamaño", "Tiempo Irrupcion", "Tiempo de Respuesta", "Tiempo de Ingreso", "Tiempo Restante de CPU"]
+    table = Table(title="Procesos en COLA de LISTOS --> Estado: 'Listo'", show_lines=True)
+    cols = [
+        ("Orden", None),
+        ("ID Proceso", "yellow"),
+        ("Tamaño", None),
+        ("T. Arribo", None),
+        ("T. Arribo a MP", None),
+        ("T. Irrupcion", None),
+        ("T. Respuesta", None),
+        ("T. Ingreso", None),
+        ("T. Restante de CPU", None),
+        ("T. Total de espera por CPU", None),
+    ]
+    for name, style in cols:
+        table.add_column(name, justify="center", style=style or "", no_wrap=False)
+
+    if listaListos:
+        for p in listaListos:
+            if not p.get("CPU"): # mostrar solo los que no están en CPU
+                table.add_row(
+                    str(listaListos.index(p) + 1),
+                    str(p.get("id", "xxx")),
+                    str(p.get("tamaño", "xxx")),
+                    str(p.get("t_arribo", "xxx")),                    
+                    str(p.get("t_arribo_MP", "xxx")),
+                    str(p.get("t_irrupcion", "xxx")),
+                    str(p.get("t_respuesta", "xxx")),
+                    str(p.get("t_ingreso", "xxx")),
+                    str(p.get("t_RestanteCPU", "xxx")),
+                    str(p.get("t_totalenColaListo", "xxx")),
+                )
+        # si la lista no esta vacia pero el unico proceso esta en CPU
+        if all(p.get("CPU") for p in listaListos):
+            table.add_row(*["xxx"] * len(cols))
+    else:# lista vacia y sin procesos para elegir en CPU
+        table.add_row(*["xxx"] * len(cols))
+    console.print(table)
+
+
+def mostrarCPU(return_table=False):  #ezequiel
+    """ Muestra la tabla de procesos en CPU """
+    console = Console()
+    table = Table(title="Proceso utilizando CPU --> Estado: 'En Ejecución'", show_lines=True)
+    for h, style in [("ID Proceso", "yellow"), ("Tamaño", None), ("Particion", None), ("T. Restante de CPU", None)]:
+        table.add_column(h, justify="center", style=style or "", no_wrap=False)
+    if listaListos:
+        for proceso in listaListos:
+            if proceso.get("CPU"):
+                #buscar particion en memoria principal
+                particion_asignada = None
+                for i, particion in enumerate(listaMP):
+                    proc_alojado = particion.get("Proceso_alojado")
+                    if proc_alojado and proc_alojado.get("id") == proceso.get("id"):
+                        particion_asignada = i 
+                        break
+                table.add_row(
+                    str(proceso.get("id", "xxx")),
+                    str(proceso.get("tamaño", "xxx")),
+                    str(listaMP[particion_asignada]["Particion"] if particion_asignada is not None else "xxx"),
+                    str(proceso.get("t_RestanteCPU", "xxx")),
+                )
+                break
+    else:
+        table.add_row(*["xxx"] * 4)
+    
+    if return_table:
+        return table
+    else:
+        console.print(table)
+
+
+def mostrarMemoriaPrincipal(return_table=False):  #agustin
+    """ Muestra la tabla de particiones de memoria principal """
+    console = Console()
+
+    #Anotaciones
+    #{
+    #Formato tabla mem principal.
+
+    #id_particion (1,2,3)
+    #id_proceso alojado 
+    #tamaño part
+    #frag
+    #Estado (disponible/ocupado)
+
+    #Agregar fila de sistema operativo (partición 0)
+    #}
+
+    #Tabla
+    table = Table(title="Procesos en estado de Listo (En Memoria Principal)", show_lines=True)
+
+    #Columnas
+    table.add_column("Partición", justify="center")
+    table.add_column("Tamaño Total", justify="center")
+    table.add_column("Dir. comienzo", justify="center")
+    table.add_column("Frag. Interna", justify="center")
+    table.add_column("ID Proceso", justify="center", style="yellow", no_wrap=True)
+    table.add_column("Dueño", justify="center")
+    table.add_column("Estado Part.", justify="center", style="bright_magenta")
+
+    #Filas
+    #Primero la fila del Sistema Operativo
+    table.add_row(
+        "0",        #Partición del SO
+        "100",
+        "451",      #Dir Comienzo
+        "xxx",
+        "xxx",
+        "SO",
+        "Ocupado",
+    )
+
+    #Luego las particiones del usuario 
+    for i in range(len(listaMP)):
+        proc = listaMP[i]["Proceso_alojado"]
+        if str(listaMP[i]["Ocupado"]) == "True":
+            estadoPart = "Ocupado"
+        else:
+            estadoPart = "Libre" 
+        table.add_row(
+            str(listaMP[i]["Particion"]),
+            str(listaMP[i]["TamañoTotal"]),
+            str(listaMP[i]["dirComienzo"]),
+            str(listaMP[i]["Fragmentacion Interna"]),
+            str(proc.get("id", "-")),
+            str(listaMP[i]["Dueño"]),
+            str(estadoPart),
+        )
+    
+    if return_table:
+        return table
+    else:
+        console.print(table)
+
+
+def mostrarColaSuspendidos(return_table=False):  #isabel
+    """ Muestra la tabla de procesos en estado de 'suspendido' """
+    
+    console = Console()
+    table = Table(title="Procesos en Memoria Secundaria --> Estado: 'Listo y Suspendido'", show_lines=True)
+    headers = ["ID Proceso", "Tiempo Arribo", "Tamaño", "Tiempo Irrupcion", "Tiempo de Respuesta", "Tiempo de Ingreso", "T. Restante de CPU"]
     for h in headers:
-        table.add_column(h, justify="right")
+        table.add_column(h, justify="right", style="yellow" if h == "ID Proceso" else "", no_wrap=False)
     if listaSuspendidos:
         for p in listaSuspendidos:
-            table.add_row(*(str(p.get(k, "xxx")) for k in ["id", "t_arribo", "tamaño", "t_irrupcion", "t_Respuesta", "t_ingreso", "t_RestanteCPU"]))
+            table.add_row(*(str(p.get(k, "xxx")) for k in ["id", "t_arribo", "tamaño", "t_irrupcion", "t_respuesta", "t_ingreso", "t_RestanteCPU"]))
     else:
         table.add_row(*["xxx"] * len(headers))
-    console.print(table)
+    
+    if return_table:
+        return table
+    else:
+        console.print(table)
+
 
 def mostrarTerminados(): #agustin
     """ Muestra la tabla de procesos terminados """
+    
+    global T_Simulacion
+    
+    console = Console()
+    table = Table(title="Procesos Terminados", show_lines=True)
+
+    #Columnas
+    table.add_column("Posicion", justify="center", no_wrap=True)
+    table.add_column("ID", justify="center", style="yellow", no_wrap=True)
+    table.add_column("Tamaño", justify="center", no_wrap=True)
+    table.add_column("T. de arribo", justify="center", no_wrap=True)
+    table.add_column("T. arribo a MP", justify="center", no_wrap=True)
+    table.add_column("T. irrupcion", justify="center", no_wrap=True)
+    table.add_column("T. finalizacion", justify="center", no_wrap=True)
+    table.add_column("T. ingreso", justify="center", no_wrap=True)
+    table.add_column("T. respuesta", justify="center", no_wrap=True)
+    table.add_column("T. total de retorno", justify="center", no_wrap=True)
+    table.add_column("T. total en listos", justify="center", no_wrap=True)
+   
+    #Filas
+    if len(listaTerminados) != 0:
+        for i in range(len(listaTerminados)):
+            table.add_row(
+                str(i+1),
+                str(listaTerminados[i]["id"]),
+                str(listaTerminados[i]["tamaño"]),
+                str(listaTerminados[i]["t_arribo"]),
+                str(listaTerminados[i]["t_arribo_MP"]),
+                str(listaTerminados[i]["t_irrupcion"]),
+                str(listaTerminados[i]["t_finalizacion"]),
+                str(listaTerminados[i]["t_ingreso"]),
+                str(listaTerminados[i]["t_respuesta"]),
+                str(listaTerminados[i]["total_retorno"]),
+                str(listaTerminados[i]["t_totalenColaListo"]),
+            )
+    else:
+        table.add_row(*["xxx"] * 11)
+    #Mostrar tabla
+    console.print(table)
+
+def mostrarInforme(): #agustin
+    """ Muestra la tabla de procesos terminados con el informe final """
+    global T_Simulacion
+    global Sumatoria_TEspera
+    global Sumatoria_TRetorno
+    console = Console()
+    table = Table(title="Procesos Terminados", show_lines=True)
+
+    limpiar_pantalla()
+    #Sumatorias de tiempos para el informe final. (usar duraciones, no instantes)
+    Sumatoria_TEspera = sum(p.get("t_respuesta", 0) for p in listaTerminados)
+    Sumatoria_TRetorno = sum(p.get("total_retorno", p.get("t_finalizacion", 0)) for p in listaTerminados)
+
+    gotoxy(1,1)
+    console.print("[bold underline grey70]Informe estadístico[/bold underline grey70]")
+    Sumatoria_TEspera = Sumatoria_TEspera / len(listaTerminados)
+    gotoxy(1,2)
+    print("Tiempo de Espera promedio:", round(Sumatoria_TEspera, 2), "(ut)")
+    Sumatoria_TRetorno = Sumatoria_TRetorno / len(listaTerminados)
+    gotoxy(1,3)
+    print("Tiempo de Retorno promedio:", round(Sumatoria_TRetorno, 2), "(ut)")
+    gotoxy(1,4)
+    rendimientoSistema = len(listaTerminados) / T_Simulacion
+    print("Rendimiento del sistema:", round(rendimientoSistema, 3), "(procesos/ut)\n")#Saltar renglón
+    mostrarTerminados()
+    #Saltar renglón
+    print("\n")  
+    console.print(f"[italic grey70]Simulación terminada...[/italic grey70]")
 
 
+def MostrarTablas():
+    """Muestra todas las tablas disponibles en el simulador"""
+    #limpiar_pantalla()
+    console = Console()
+    # --- Captura de objetos ---
+    t_cargados = mostrarTablasActualizadas(return_table=True)
+    t_memoria = mostrarMemoriaPrincipal(return_table=True)
+    t_cpu = mostrarCPU(return_table=True)
+    t_suspendidos = mostrarColaSuspendidos(return_table=True)
+    
+    # --- NIVEL 1: Cargados y Memoria Principal (Uno al lado del otro) ---
+    grilla_superior = Table.grid(padding=4)
+    grilla_superior.add_column()
+    grilla_superior.add_column()
+    grilla_superior.add_row(t_cargados, t_memoria)
 
-####################################### FUNCIONES GRÁFICAS ######################################
-#        borradisimo
+    # --- NIVEL 2: CPU y Memoria Secundaria (Uno al lado del otro) ---
+    grilla_inferior = Table.grid(padding=4)
+    grilla_inferior.add_column()
+    grilla_inferior.add_column()
+    grilla_inferior.add_row(t_cpu, t_suspendidos)
+
+    # --- Impresión final ---
+    print() #un print adicional para que la tabla no esté tan pegada al borde superior
+    console.print(grilla_superior)
+    print("-" * 180)
+    console.print(grilla_inferior)
+    print("-" * 180)
+    
+    mostrarColaListos()
+    print("-" * 180)
+    #mostrarTerminados() #Solo se mostrará al final de la simulación
+
+#Muestra la información de la ejecución al final de la pantalla.
+def mostrarInfoEjecucion():
+    """Muestra información relevante durante la ejecución del simulador"""
+    global T_Simulacion, multiprogramacion, listaListos, listaSuspendidos
+
+    console = Console()
+    console.print(f"[bold italic underline grey70]Ejecución del Simulador:[/bold italic underline grey70]")
+    console.print(f"[bold italic grey70]Tiempo de simulación actual:    {T_Simulacion} (ut)[/bold italic grey70]")
+    console.print(f"[bold italic grey70]Multiprogramación actual:       {multiprogramacion} (procesos)[/bold italic grey70]")
+    print()
+    console.print(f"[bold italic grey70]Presione cualquier tecla para continuar...[/bold italic grey70]")
 
 
+####################################### MAIN PRINCIPAL ##########################################
 
+ejecutarMenu()
 
+mostrarNuevos()
 
+msvcrt.getch()
+limpiar_pantalla()
 
-
-
-
-############# BUCLE DE EJECUCIÓN #############
 while len(listaTerminados) < len(listaNuevos):
     
     banderaMostrarTablas = False # bandera para mostrar tablas si hay cambios en admision o terminacion
@@ -807,6 +1008,13 @@ while len(listaTerminados) < len(listaNuevos):
     # tiempo del simulador parejo con los procesos que van llegando para hacer la admision de ese instante
     
     ADMICION_MULTI_5()
+    if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
+            #Mostrar pantalla poner todas las tablas.
+            banderaMostrarTablas = False # resetear bandera para otro ciclo
+            MostrarTablas()
+            mostrarInfoEjecucion()
+            msvcrt.getch()  # espera cualquier tecla
+            limpiar_pantalla()
 
     ########## EJECUCION #########
     #SEGUNDO buscar el proceso SRTF
@@ -817,18 +1025,19 @@ while len(listaTerminados) < len(listaNuevos):
 
     procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
 
-    while (procesoEjecucion is not None) and (procesoEjecucion["tiempo_restante"] > 0):
+    while (procesoEjecucion is not None) and (procesoEjecucion.get("t_RestanteCPU", 0) > 0):
         
         banderaMostrarTablas = False # bandera para mostrar tablas si hay cambios en admision o terminacion
         
-        # Ejecutar un ciclo de CPU
-        procesoEjecucion["tiempo_restante"] -= 1
-        T_simulador += 1
+        # Ejecutar un ciclo de CPU (decrementar único contador estándar)
+        procesoEjecucion["t_RestanteCPU"] = procesoEjecucion.get("t_RestanteCPU") -1
+        T_Simulacion += 1
         
         # Sumar tiempo de espera a los demas procesos en listaListos ya cargados para este ciclo
-        for otrosProcesos in listaListos:
-            if otrosProcesos["id"] != procesoEjecucion["id"]:
-                otrosProcesos["t_totalenColaListo"] += 1
+        if len(listaListos) > 1:
+            for otrosProcesos in listaListos:
+                if otrosProcesos.get("id") != procesoEjecucion.get("id"):
+                    otrosProcesos["t_totalenColaListo"] = otrosProcesos.get("t_totalenColaListo") + 1
         
         # Verificar si llegó un nuevo proceso para admisión
         ADMICION_MULTI_5() #acomoda memoria si es necesario y luego termina de admitir
@@ -839,30 +1048,56 @@ while len(listaTerminados) < len(listaNuevos):
             procesoEjecucion = None
                 
         # Manejo de cambio de contexto (cuando termina un proceso, busca otro para ejecutar)
+
+
         if (len(listaListos) > 0) and (procesoEjecucion is None):
-            print(f"Cambio de contexto al siguiente proceso SRTF.")
-            indice_procesoEjecucion = BuscarSRTF()
-            procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
-            print(f"Cambio de contexto: {procesoEjecucion['id']} ingresa a CPU")
+                print(f"Cambio de contexto al siguiente proceso SRTF.")
+                indice_procesoEjecucion = BuscarSRTF()  # busca el siguiente proceso a ejecutar
+                ADMICION_MULTI_5()  # permitir admisiones que ocupen huecos en MP
+
+                # Si no hay partición ocupada con un proceso listo, salimos del bucle de ejecución
+                # (usar `break` es más explícito que `continue` aquí porque estamos dentro del bucle de ejecución)
+                if indice_procesoEjecucion is None:
+                    break  # salir al while externo (posible ciclo ocioso)
+                procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
+                print(f"Cambio de contexto: {procesoEjecucion['id']} ingresa a CPU")
+        elif len(listaListos) == 0 and procesoEjecucion is None:
+            print(f"Cambio de contexto al siguiente proceso SRTF con memoria vacia --> admisiones --> SRTF.")
+            ADMICION_MULTI_5()  # permitir admisiones que ocupen huecos en MP
+            indice_procesoEjecucion = BuscarSRTF()  # busca el siguiente proceso a ejecutar
+            if indice_procesoEjecucion is None:
+                    break  # salir al while externo (posible ciclo ocioso)
+            procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"] #actualizo el proceso en ejecucion que se usa en el ciclo de CPU
+        
+
+
+        if indice_procesoEjecucion is None:
+            break #vuelve al while mayor para un ciclo ocioso
 
         ADMICION_MULTI_5() # revisar si hay admision de nuevos procesos después del cambio de contexto para ocupar el espacio liberado
-        indice_procMasPrioridad = BuscarSRTF()
-        procMasPrioridad = listaMP[indice_procMasPrioridad]["Proceso_alojado"]
+        indice_procMasPrioridad = BuscarSRTF() # busca otro proceso para hacer una apropiacion de CPU
         
         # control de APROPIACION de CPU para la admision de nuevos procesos causado por ADMICION_MULTI_5
-        if procMasPrioridad is not None:      
-            if procMasPrioridad["id"] != procesoEjecucion["id"]:
-                print(f"Cambio de contexto: {procesoEjecucion['id']} sale -> {procMasPrioridad['id']} APROPIA CPU")
-                procesoEjecucion = procMasPrioridad
-                indice_procesoEjecucion = indice_procMasPrioridad
-                # la tabla de CPU se actualiza en la siguiente sección gráfica
+        if indice_procMasPrioridad is not None and procesoEjecucion is not None:     
+            procMasPrioridad = listaMP[indice_procMasPrioridad]["Proceso_alojado"]
+            
+            # Validar que procMasPrioridad no sea dict vacío
+            if procMasPrioridad and procMasPrioridad.get("id") is not None:
+                if procMasPrioridad.get("id") != procesoEjecucion.get("id"):
+                    print(f"Cambio de contexto: {procesoEjecucion['id']} sale -> {procMasPrioridad['id']} APROPIA CPU")
+                    procesoEjecucion = procMasPrioridad
+                    indice_procesoEjecucion = indice_procMasPrioridad
+                    # la tabla de CPU se actualiza en la siguiente sección gráfica
         
         if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
-            #Mostrar pantalla
+            #Mostrar pantalla poner todas las tablas.
             banderaMostrarTablas = False # resetear bandera para otro ciclo
-            
+            MostrarTablas()
+            mostrarInfoEjecucion()
 
-    #Más abajo mostrar el informe
-
-def mostrar_listaTerminados():
-    
+            msvcrt.getch()  # espera cualquier tecla
+            limpiar_pantalla()
+#Informe final al terminar la simulación
+mostrarInforme()
+input("Presione [Enter] para cerrar...")
+#asarake saraja...
