@@ -761,7 +761,7 @@ def mostrarColaListos():  #ezequiel
 def mostrarCPU():  #ezequiel
     """ Muestra la tabla de procesos en CPU """
 
-def mostrarMemoriaPrincipal():  #isabel
+def mostrarMemoriaPrincipal():  #agustin
     """ Muestra la tabla de particiones de memoria principal """
 
 def mostrarColaSuspendidos():  #isabel
