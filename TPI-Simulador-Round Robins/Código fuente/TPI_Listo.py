@@ -149,13 +149,17 @@ def seleccionarCSV():
     archivos_csv = [p for p in sorted(directorio_actual.iterdir()) if p.suffix.lower() == ".csv"]
 
     if not archivos_csv:
+        limpiar_pantalla()
+        mostrar_logo2()
         gotoxy(20,22)
         print("No se encontraron archivos CSV en el directorio.")
         gotoxy(10,23)
         print("Puede pegar aquí la ruta completa de un .csv o presionar S para salir.")
         limpiar_buffer_entrada()
-        gotoxy(1, yMaxPantalla - 2)
-        ruta = input("Ingrese ruta completa del CSV (o S para salir): ").strip().strip('"')
+        gotoxy(16,25)
+        print("Ingrese ruta completa del CSV (o escriba S para salir): ") 
+        ruta = input().strip().strip('"')
+        gotoxy(20,27)
         if ruta.lower() == 's' or ruta == '':
             return None
         # permitir stdin
@@ -167,17 +171,18 @@ def seleccionarCSV():
             p = (base / p).resolve()
         if p.exists() and p.suffix.lower() == '.csv':
             return p
-        gotoxy(1, yMaxPantalla - 2)
-        print(f"Archivo no válido o no existe: {ruta}")
+        gotoxy(1, 30)
+        print(f"Archivo no válido o no existe: {ruta}, abortando operación.")
         print("Presione cualquier tecla para continuar...")
         msvcrt.getch()
+        sys.exit()
         return None
 
     console = Console()
     gotoxy(34,20)
     console.print(f"[bold italic grey70]Seleccione un archivo...[/bold italic grey70]")
 
-    mensajeOp = "Use las flechas (⬆︎ ⬇︎), 0=Ruta externa, S=Salir, Enter=Seleccionar"
+    mensajeOp = "Use las flechas (⬆︎ ⬇︎), [0]=Ruta externa, [Enter]=Seleccionar"
     gotoxy((xMaxPantalla-len(mensajeOp))//2+1, yMaxPantalla//2+5)
     print(mensajeOp)
 
@@ -187,10 +192,8 @@ def seleccionarCSV():
         print(f"{AZUL}{i}. {AMARILLO}{archivo.name}{RESET}")
 
     # opción para ingresar ruta completa y salir
-    gotoxy(37, pos_opciones + len(archivos_csv) + 1)
-    print(f"{AZUL}0. {AMARILLO}Introducir ruta completa (archivo externo){RESET}")
-    gotoxy(37, pos_opciones + len(archivos_csv) + 2)
-    print(f"{AZUL}S. {AMARILLO}Salir{RESET}")
+    gotoxy(23, pos_opciones + len(archivos_csv) + 2)
+    print(f"0. Introducir ruta completa (archivo externo)")
 
     pos_puntero = 0
     tecla = ''
@@ -214,7 +217,7 @@ def seleccionarCSV():
             limpiar_pantalla()
             limpiar_buffer_entrada()
             gotoxy(0, 0)
-            print("\nIngrese la ruta completa del CSV (o S para cancelar): ", end="", flush=True)
+            print("\nIngrese la ruta completa del CSV (o escriba S para cancelar): ", end="", flush=True)
             ruta = input().strip().strip('"')
             if ruta.lower() == 's' or ruta == '':
                 limpiar_pantalla()
@@ -222,6 +225,13 @@ def seleccionarCSV():
             if ruta == '-':
                 return '-'
             p = Path(ruta)
+            if ruta == None:
+                print(f"\nNo se ingresó ninguna ruta. Abortando.")
+                print("Presione cualquier tecla para continuar...")
+                msvcrt.getch()
+                sys.exit()
+                limpiar_pantalla()
+                return None
             if not p.is_absolute():
                 base = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
                 p = (base / p).resolve()
@@ -229,19 +239,14 @@ def seleccionarCSV():
                 limpiar_pantalla()
                 return p
             else:
-                gotoxy(1, yMaxPantalla - 2)
-                print(f"\nArchivo no válido o no existe: {ruta}")
+                gotoxy(1,5)
+                print(f"\nArchivo no válido o no existe: {ruta}, abortando operación.")
                 print("Presione cualquier tecla para continuar...")
                 msvcrt.getch()
+                sys.exit()
                 limpiar_pantalla()
-                return seleccionarCSV()
-
-        # salir
-        elif tecla.lower() == 's':
-            limpiar_pantalla()
-            input("Presione [Enter] para cerrar...")
-            exit()
-            
+                #return seleccionarCSV()
+         
         elif tecla == TECLA_ENTER:
             # Devuelve un Path absoluto al archivo seleccionado
             if NUM_OPCIONES:
