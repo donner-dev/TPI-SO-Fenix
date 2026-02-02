@@ -152,7 +152,24 @@ def seleccionarCSV():
         gotoxy(20,22)
         print("No se encontraron archivos CSV en el directorio.")
         gotoxy(10,23)
-        print("Coloque un archivo .csv en el directorio y vuelva a abrir el programa.")
+        print("Puede pegar aquí la ruta completa de un .csv o presionar S para salir.")
+        limpiar_buffer_entrada()
+        gotoxy(1, yMaxPantalla - 2)
+        ruta = input("Ingrese ruta completa del CSV (o S para salir): ").strip().strip('"')
+        if ruta.lower() == 's' or ruta == '':
+            return None
+        # permitir stdin
+        if ruta == '-':
+            return '-' 
+        p = Path(ruta)
+        if not p.is_absolute():
+            base = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
+            p = (base / p).resolve()
+        if p.exists() and p.suffix.lower() == '.csv':
+            return p
+        gotoxy(1, yMaxPantalla - 2)
+        print(f"Archivo no válido o no existe: {ruta}")
+        print("Presione cualquier tecla para continuar...")
         msvcrt.getch()
         return None
 
@@ -160,7 +177,7 @@ def seleccionarCSV():
     gotoxy(34,20)
     console.print(f"[bold italic grey70]Seleccione un archivo...[/bold italic grey70]")
 
-    mensajeOp = "Use las flechas (⬆︎ ⬇︎) y presione (Enter)"
+    mensajeOp = "Use las flechas (⬆︎ ⬇︎), 0=Ruta externa, S=Salir, Enter=Seleccionar"
     gotoxy((xMaxPantalla-len(mensajeOp))//2+1, yMaxPantalla//2+5)
     print(mensajeOp)
 
@@ -168,6 +185,12 @@ def seleccionarCSV():
     for i, archivo in enumerate(archivos_csv, start=1):
         gotoxy(37, pos_opciones+i)
         print(f"{AZUL}{i}. {AMARILLO}{archivo.name}{RESET}")
+
+    # opción para ingresar ruta completa y salir
+    gotoxy(37, pos_opciones + len(archivos_csv) + 1)
+    print(f"{AZUL}0. {AMARILLO}Introducir ruta completa (archivo externo){RESET}")
+    gotoxy(37, pos_opciones + len(archivos_csv) + 2)
+    print(f"{AZUL}S. {AMARILLO}Salir{RESET}")
 
     pos_puntero = 0
     tecla = ''
@@ -178,15 +201,55 @@ def seleccionarCSV():
         pos_puntero_ant = pos_puntero
         tecla = read_single_key_windows()
 
+        # navegación por flechas
         if tecla == TECLA_ARRIBA:
-            pos_puntero = (pos_puntero - 1) % NUM_OPCIONES
+            if NUM_OPCIONES:
+                pos_puntero = (pos_puntero - 1) % NUM_OPCIONES
         elif tecla == TECLA_ABAJO:
-            pos_puntero = (pos_puntero + 1) % NUM_OPCIONES
+            if NUM_OPCIONES:
+                pos_puntero = (pos_puntero + 1) % NUM_OPCIONES
+
+        # ingresar ruta externa
+        elif tecla == '0':
+            limpiar_pantalla()
+            limpiar_buffer_entrada()
+            gotoxy(0, 0)
+            print("\nIngrese la ruta completa del CSV (o S para cancelar): ", end="", flush=True)
+            ruta = input().strip().strip('"')
+            if ruta.lower() == 's' or ruta == '':
+                limpiar_pantalla()
+                return None
+            if ruta == '-':
+                return '-'
+            p = Path(ruta)
+            if not p.is_absolute():
+                base = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
+                p = (base / p).resolve()
+            if p.exists() and p.suffix.lower() == '.csv':
+                limpiar_pantalla()
+                return p
+            else:
+                gotoxy(1, yMaxPantalla - 2)
+                print(f"\nArchivo no válido o no existe: {ruta}")
+                print("Presione cualquier tecla para continuar...")
+                msvcrt.getch()
+                limpiar_pantalla()
+                return seleccionarCSV()
+
+        # salir
+        elif tecla.lower() == 's':
+            limpiar_pantalla()
+            input("Presione [Enter] para cerrar...")
+            exit()
+            
         elif tecla == TECLA_ENTER:
             # Devuelve un Path absoluto al archivo seleccionado
-            return archivos_csv[pos_puntero]
+            if NUM_OPCIONES:
+                return archivos_csv[pos_puntero]
+            else:
+                return None
 
-        if tecla:
+        if tecla and NUM_OPCIONES:
             gotoxy(X_PUNTERO, pos_opciones + pos_puntero_ant + 1)
             print(" ", end="", flush=True)
             gotoxy(X_PUNTERO, pos_opciones + pos_puntero + 1)
@@ -1100,4 +1163,3 @@ while len(listaTerminados) < len(listaNuevos):
 #Informe final al terminar la simulación
 mostrarInforme()
 input("Presione [Enter] para cerrar...")
-#asarake saraja...
