@@ -57,6 +57,7 @@ cantProcesosRestantes=0
 multiprogramacion=0
 aux=None
 banderaMostrarTablas=False
+listaNoAdmitidos=[]     #Para resguardar el id de aquellos procesos que no se admitieron por tamaño
 
 #variables de cálculo estadístico:
 Sumatoria_TRetorno= 0
@@ -204,7 +205,7 @@ def seleccionarCSV():
 
 def leer_procesos(csv_filename: str):
     """Lee el CSV y devuelve una LISTA de procesos (diccionarios) ordenados por t_arribo"""
-    
+
     csv_path = Path(__file__).resolve().parent / csv_filename
     nuevos = []  # lista de procesos
     valid_count = 0
@@ -231,7 +232,7 @@ def leer_procesos(csv_filename: str):
             try:
                 tamaño_int = int(tamaño)
                 if tamaño_int > 250:
-                    print(f"Proceso {id_proceso} descartado: tamaño {tamaño_int} excede el máximo permitido (250).")
+                    listaNoAdmitidos.append(id_proceso)
                     continue  # salta este proceso y no lo agrega
 
                 proceso = {
@@ -685,9 +686,24 @@ def mostrarTablasActualizadas(return_table=False):
 def mostrarNuevos():  #agustin
     console = Console()
     mostrarTablasActualizadas()
-    console.print(f"[italic grey70]Archivo leído exitosamente![/italic grey70]")
+    global listaNoAdmitidos
+    if len(listaNoAdmitidos) > 0:
+        print(f"\033[31mAVISO: No se admitieron ({len(listaNoAdmitidos)}) procesos\033[0m")
+        print(f"\033[31mRAZÓN: Excedieron el tamaño máximo permitido (250kb)\033[0m")
+        print(f"\033[31mProcesos no admitidos: {', '.join(listaNoAdmitidos)}\033[0m")
+    if len(listaNuevos) == 0:
+        print()
+        limpiar_pantalla()
+        print(f"\033[31mAVISO: NO SE CARGÓ NINGÚN PROCESO EN EL ARCHIVO\033[0m")
+        print("Reinicie el simulador y pruebe con otro archivo.")
+        msvcrt.getch()  # espera cualquier tecla
+        sys.exit()
+
     print()
-    console.print(f"[italic grey70]Presione enter para continuar...[/italic grey70]")
+    console.print(f"[italic grey70]Archivo leído exitosamente![/italic grey70]")
+    console.print(f"[italic grey70]Cant. procesos cargados: {len(listaNuevos)}.[/italic grey70]")
+    print()
+    console.print(f"[italic grey70]Presione [Enter] para continuar...[/italic grey70]")
 
 def mostrarColaListos():  #ezequiel
     """ Muestra la tabla de procesos en lista de listos """
@@ -959,8 +975,8 @@ def mostrarInfoEjecucion():
 
     console = Console()
     console.print(f"[bold italic underline grey70]Ejecución del Simulador:[/bold italic underline grey70]")
-    console.print(f"[bold italic grey70]Tiempo de simulación actual: {T_Simulacion} (ut)[/bold italic grey70]")
-    console.print(f"[bold italic grey70]Multiprogramación actual:    {multiprogramacion} (procesos)[/bold italic grey70]")
+    console.print(f"[bold italic grey70]Tiempo de simulación actual:    {T_Simulacion} (ut)[/bold italic grey70]")
+    console.print(f"[bold italic grey70]Multiprogramación actual:       {multiprogramacion} (procesos)[/bold italic grey70]")
     print()
     console.print(f"[bold italic grey70]Presione cualquier tecla para continuar...[/bold italic grey70]")
 
@@ -1077,5 +1093,5 @@ while len(listaTerminados) < len(listaNuevos):
             limpiar_pantalla()
 #Informe final al terminar la simulación
 mostrarInforme()
-input("Presione ENTER para cerrar...")
+input("Presione [Enter] para cerrar...")
 #asarake saraja...
