@@ -267,7 +267,6 @@ def leer_procesos(csv_filename: str):
 def ejecutarMenu():
     global listaNuevos
     
-
     #Bordes y texto 
     limpiar_pantalla()
     for y in range(1, yMaxPantalla):
@@ -290,6 +289,7 @@ def ejecutarMenu():
 ################################ FUNCIONES PARA LA EJECUCIÓN ####################################
 
 def MPllena():
+    """Control necesario para saber si la memoria principal está ocupada y/o disponible para siquiera pensar en admitir un proceso"""
     for p in range(len(listaMP)):
         if listaMP[p]["Ocupado"] == False:
             return False
@@ -316,6 +316,8 @@ def AsignPartBestFit(procActual):
             procActual["t_arribo_MP"] = T_Simulacion
 
 def cabeEnAlgunaParticionLIBRE(proc):
+    """Control adicional necesario para saber si es factible admitir el proceso, previendo si cabe en almenos una partición"""
+
     global listaMP
 
     for p in range(len(listaMP)):
@@ -324,7 +326,10 @@ def cabeEnAlgunaParticionLIBRE(proc):
             return True
     return False
 
+
 def mover_aColaListo(procActual):
+    """Se mueven procesos a la cola de listos mediante FIFO, de aquellos que también están en MP"""
+    
     global T_Simulacion
 
     #Proceso entró en ámbito de multiprogramación
@@ -409,7 +414,7 @@ def mandarTerminados(procActual,indiceMP):
     #quitar de la listaListos el proceso
     listaListos[:] = [p for p in listaListos if p["id"] != procActual["id"]]
 
-
+#Planif. corto plazo SRTF
 def BuscarSRTF() -> Optional[int]:
     """
     Busca el proceso con menor tiempo restante (SRTF) entre los listos que tengan
@@ -469,7 +474,6 @@ def BuscarSRTF() -> Optional[int]:
             return i
     return None
 
-
 def CARGAR_MPconMS():
     while len(listaListos) < 3:
         cambios = False
@@ -523,10 +527,12 @@ def ADMICION_MULTI_5():
     if multiprogramacion >= 5:
         return
 
+    #Planif. medio plazo
     #si listaListos menor a 3 y listaSuspendidos no vacía 
     if len(listaListos) < 3 and listaSuspendidos:
         CARGAR_MPconMS()
 
+    #Planif. largo Plazo + FIFO
     while multiprogramacion < 5:
         cambios = False
         for proceso in listaNuevos:
@@ -661,7 +667,7 @@ def mostrarTablasActualizadas(return_table=False):
     table.add_column("Tiempo Arribo", justify="right")
     table.add_column("Tamaño",justify="right" )
     table.add_column("Tiempo Irrupcion", justify="right")
-    table.add_column("ESTADO", justify="right")
+    table.add_column("Estado del Proceso", justify="right")
     for p in listaNuevos:
         estadoActual= actualizar_estado_Proceso(p)
         table.add_row( #medio tipo:  array[0] pero con los key del diccionario
@@ -891,6 +897,7 @@ def mostrarInforme(): #agustin
     console = Console()
     table = Table(title="Procesos Terminados", show_lines=True)
 
+    limpiar_pantalla()
     #Sumatorias de tiempos para el informe final. (usar duraciones, no instantes)
     Sumatoria_TEspera = sum(p.get("t_respuesta", 0) for p in listaTerminados)
     Sumatoria_TRetorno = sum(p.get("total_retorno", p.get("t_finalizacion", 0)) for p in listaTerminados)
@@ -914,9 +921,8 @@ def mostrarInforme(): #agustin
 
 def MostrarTablas():
     """Muestra todas las tablas disponibles en el simulador"""
-    limpiar_pantalla()
+    #limpiar_pantalla()
     console = Console()
-
     # --- Captura de objetos ---
     t_cargados = mostrarTablasActualizadas(return_table=True)
     t_memoria = mostrarMemoriaPrincipal(return_table=True)
@@ -944,7 +950,20 @@ def MostrarTablas():
     
     mostrarColaListos()
     print("-" * 180)
-    mostrarTerminados()
+    #mostrarTerminados() #Solo se mostrará al final de la simulación
+
+#Muestra la información de la ejecución al final de la pantalla.
+def mostrarInfoEjecucion():
+    """Muestra información relevante durante la ejecución del simulador"""
+    global T_Simulacion, multiprogramacion, listaListos, listaSuspendidos
+
+    console = Console()
+    console.print(f"[bold italic underline grey70]Ejecución del Simulador:[/bold italic underline grey70]")
+    console.print(f"[bold italic grey70]Tiempo de simulación actual: {T_Simulacion} (ut)[/bold italic grey70]")
+    console.print(f"[bold italic grey70]Multiprogramación actual:    {multiprogramacion} (procesos)[/bold italic grey70]")
+    print()
+    console.print(f"[bold italic grey70]Presione cualquier tecla para continuar...[/bold italic grey70]")
+
 
 ####################################### MAIN PRINCIPAL ##########################################
 ejecutarMenu()
@@ -970,14 +989,11 @@ while len(listaTerminados) < len(listaNuevos):
     if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
             #Mostrar pantalla poner todas las tablas.
             banderaMostrarTablas = False # resetear bandera para otro ciclo
-            print(f"Tiempo de simulación actual: >>>>>>>>>>>>>>>> {T_Simulacion} (ut) <<<<<<<<<<<<<<<<")
-            print(f"Multiprogramación actual: >>>>>>>>>>>>>>>> {multiprogramacion} procesos <<<<<<<<<<<<<<<<")
             MostrarTablas()
-            print(f"Tiempo de simulación actual: >>>>>>>>>>>>>>>> {T_Simulacion} (ut) <<<<<<<<<<<<<<<<")
-            print(f"Multiprogramación actual: >>>>>>>>>>>>>>>> {multiprogramacion} procesos <<<<<<<<<<<<<<<<")
-            print(f"presione cualquier tecla para continuar...")
+            mostrarInfoEjecucion()
             msvcrt.getch()  # espera cualquier tecla
             limpiar_pantalla()
+
     ########## EJECUCION #########
     #SEGUNDO buscar el proceso SRTF
     indice_procesoEjecucion = BuscarSRTF() # retorna el indice de la particion en memoria principal que contiene el proceso con menor tiempo restante
@@ -992,13 +1008,14 @@ while len(listaTerminados) < len(listaNuevos):
         banderaMostrarTablas = False # bandera para mostrar tablas si hay cambios en admision o terminacion
         
         # Ejecutar un ciclo de CPU (decrementar único contador estándar)
-        procesoEjecucion["t_RestanteCPU"] -= 1
+        procesoEjecucion["t_RestanteCPU"] = procesoEjecucion.get("t_RestanteCPU") -1
         T_Simulacion += 1
         
         # Sumar tiempo de espera a los demas procesos en listaListos ya cargados para este ciclo
-        for otrosProcesos in listaListos:
-            if otrosProcesos["id"] != procesoEjecucion["id"]:
-                otrosProcesos["t_totalenColaListo"] = otrosProcesos.get("t_totalenColaListo") + 1
+        if len(listaListos) > 1:
+            for otrosProcesos in listaListos:
+                if otrosProcesos.get("id") != procesoEjecucion.get("id"):
+                    otrosProcesos["t_totalenColaListo"] = otrosProcesos.get("t_totalenColaListo") + 1
         
         # Verificar si llegó un nuevo proceso para admisión
         ADMICION_MULTI_5() #acomoda memoria si es necesario y luego termina de admitir
@@ -1009,15 +1026,28 @@ while len(listaTerminados) < len(listaNuevos):
             procesoEjecucion = None
                 
         # Manejo de cambio de contexto (cuando termina un proceso, busca otro para ejecutar)
+
+
         if (len(listaListos) > 0) and (procesoEjecucion is None):
-            print(f"Cambio de contexto al siguiente proceso SRTF.")
-            indice_procesoEjecucion = BuscarSRTF()# este SRTF busca al siguiente proceso a ejecutar que viene a ser el que le sigue en orden al que termino
-            ADMICION_MULTI_5() # revisar si hay admision de nuevos procesos después del cambio de contexto para ocupar el espacio liberado
-             # si no hay procesos en listos vuelve al while mayor para un ciclo ocioso
+                print(f"Cambio de contexto al siguiente proceso SRTF.")
+                indice_procesoEjecucion = BuscarSRTF()  # busca el siguiente proceso a ejecutar
+                ADMICION_MULTI_5()  # permitir admisiones que ocupen huecos en MP
+
+                # Si no hay partición ocupada con un proceso listo, salimos del bucle de ejecución
+                # (usar `break` es más explícito que `continue` aquí porque estamos dentro del bucle de ejecución)
+                if indice_procesoEjecucion is None:
+                    break  # salir al while externo (posible ciclo ocioso)
+                procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
+                print(f"Cambio de contexto: {procesoEjecucion['id']} ingresa a CPU")
+        elif len(listaListos) == 0 and procesoEjecucion is None:
+            print(f"Cambio de contexto al siguiente proceso SRTF con memoria vacia --> admisiones --> SRTF.")
+            ADMICION_MULTI_5()  # permitir admisiones que ocupen huecos en MP
+            indice_procesoEjecucion = BuscarSRTF()  # busca el siguiente proceso a ejecutar
             if indice_procesoEjecucion is None:
-                continue # vuelve al while mayor para un ciclo ocioso
-            procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"]
-            print(f"Cambio de contexto: {procesoEjecucion['id']} ingresa a CPU")
+                    break  # salir al while externo (posible ciclo ocioso)
+            procesoEjecucion = listaMP[indice_procesoEjecucion]["Proceso_alojado"] #actualizo el proceso en ejecucion que se usa en el ciclo de CPU
+        
+
 
         if indice_procesoEjecucion is None:
             break #vuelve al while mayor para un ciclo ocioso
@@ -1040,12 +1070,9 @@ while len(listaTerminados) < len(listaNuevos):
         if banderaMostrarTablas == True:#mostrar por pantalla el estado actual del simulador
             #Mostrar pantalla poner todas las tablas.
             banderaMostrarTablas = False # resetear bandera para otro ciclo
-            print(f"Tiempo de simulación actual: >>>>>>>>>>>>>>>> {T_Simulacion} (ut) <<<<<<<<<<<<<<<<")
-            print(f"Multiprogramación actual: >>>>>>>>>>>>>>>> {multiprogramacion} procesos <<<<<<<<<<<<<<<<")            
             MostrarTablas()
-            print(f"Tiempo de simulación actual: >>>>>>>>>>>>>>>> {T_Simulacion} (ut) <<<<<<<<<<<<<<<<")
-            print(f"Multiprogramación actual: >>>>>>>>>>>>>>>> {multiprogramacion} procesos <<<<<<<<<<<<<<<<")
-            print(f"presione cualquier tecla para continuar...")
+            mostrarInfoEjecucion()
+
             msvcrt.getch()  # espera cualquier tecla
             limpiar_pantalla()
 #Informe final al terminar la simulación
