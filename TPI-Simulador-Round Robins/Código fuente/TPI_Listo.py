@@ -10,12 +10,6 @@ import sys
 import os
 sys.path.append('..')
 
-""" Importé las funciones de SIMULADOR.py  para tenerlo modulado como se habia discutido (vamos viendo si queda bien o no) """
-#import paquetes.LisandroRojas.funcionesLisandro_prolijo as Lis
-#import paquetes.AgustinVeron.Menu as MA
-#import paquetes.LisandroRojas.funcionesconlistas_isabel_arregladoLisandro as FunArchivos
-#import paquetes.estado_global as vGlobal
-
 
 ###################################### VARIABLES GLOBALES ######################################
 listaNuevos=[]
@@ -145,11 +139,14 @@ def seleccionarCSV():
     global AZUL
     global AMARILLO
     global RESET
-    
-    #Obtiene los archivos CSV
-    directorio_actual = os.path.dirname(os.path.abspath(__file__))
-    archivos = os.listdir(directorio_actual)
-    archivos_csv = [a for a in archivos if a.lower().endswith(".csv")]
+
+    #Obtiene los archivos CSV (devuelve Path absolutos)
+    if getattr(sys, 'frozen', False):
+        directorio_actual = Path(sys.executable).resolve().parent
+    else:
+        directorio_actual = Path(__file__).resolve().parent
+
+    archivos_csv = [p for p in sorted(directorio_actual.iterdir()) if p.suffix.lower() == ".csv"]
 
     if not archivos_csv:
         gotoxy(20,22)
@@ -163,22 +160,19 @@ def seleccionarCSV():
     gotoxy(34,20)
     console.print(f"[bold italic grey70]Seleccione un archivo...[/bold italic grey70]")
 
-    #Mostrar instrucciones
     mensajeOp = "Use las flechas (⬆︎ ⬇︎) y presione (Enter)"
     gotoxy((xMaxPantalla-len(mensajeOp))//2+1, yMaxPantalla//2+5)
     print(mensajeOp)
 
-    #Mostrar lista de archivos CSV
     pos_opciones = yMaxPantalla//2+6
     for i, archivo in enumerate(archivos_csv, start=1):
         gotoxy(37, pos_opciones+i)
-        print(f"{AZUL}{i}. {AMARILLO}{archivo}{RESET}")
+        print(f"{AZUL}{i}. {AMARILLO}{archivo.name}{RESET}")
 
-    # Inicializar puntero
     pos_puntero = 0
     tecla = ''
     NUM_OPCIONES = len(archivos_csv)
-    X_PUNTERO = (xMaxPantalla // 2) - 30  # Ajustá según tu diseño
+    X_PUNTERO = (xMaxPantalla // 2) - 30
 
     while True:
         pos_puntero_ant = pos_puntero
@@ -189,33 +183,44 @@ def seleccionarCSV():
         elif tecla == TECLA_ABAJO:
             pos_puntero = (pos_puntero + 1) % NUM_OPCIONES
         elif tecla == TECLA_ENTER:
-            # Cuando se presiona Enter, se devuelve el nombre del archivo seleccionado
+            # Devuelve un Path absoluto al archivo seleccionado
             return archivos_csv[pos_puntero]
 
         if tecla:
-            # Borrar puntero anterior
             gotoxy(X_PUNTERO, pos_opciones + pos_puntero_ant + 1)
             print(" ", end="", flush=True)
-            # Dibujar puntero nuevo
             gotoxy(X_PUNTERO, pos_opciones + pos_puntero + 1)
             print("▶", end="", flush=True)
 
         gotoxy(xMaxPantalla, yMaxPantalla + 2)
 
 
-def leer_procesos(csv_filename: str):
-    """Lee el CSV y devuelve una LISTA de procesos (diccionarios) ordenados por t_arribo"""
-
-    csv_path = Path(__file__).resolve().parent / csv_filename
-    nuevos = []  # lista de procesos
+def leer_procesos(csv_filename):
+    """Lee el CSV y devuelve una LISTA de procesos.
+    csv_filename puede ser:
+      - Path o str absoluto
+      - nombre relativo (se busca junto al script o al .exe cuando esté frozen)
+      - '-' para leer desde stdin (opcional, por tubería)
+    """
+    nuevos = []
     valid_count = 0
 
-    # Verificar si el archivo existe
-    if not csv_path.exists():
-        return []  # devolvemos lista vacía para que el simulador no rompa
+    # soporte stdin
+    if isinstance(csv_filename, str) and csv_filename == "-":
+        reader = csv.reader(sys.stdin, delimiter=',')
+        iterator = reader
+    else:
+        csv_path = Path(csv_filename)
+        if not csv_path.is_absolute():
+            base = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
+            csv_path = (base / csv_path).resolve()
 
-    with csv_path.open(mode="r", newline="", encoding="utf-8") as f:
+        if not csv_path.exists():
+            return []  # no romper el simulador si no existe
+
+        f = csv_path.open(mode="r", newline="", encoding="utf-8")
         reader = csv.reader(f, delimiter=',')
+        iterator = reader
 
         for row_number, row in enumerate(reader, start=1):
             if not row:
