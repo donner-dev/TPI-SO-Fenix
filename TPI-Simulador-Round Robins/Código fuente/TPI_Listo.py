@@ -153,11 +153,11 @@ def seleccionarCSV():
         mostrar_logo2()
         gotoxy(20,22)
         print("No se encontraron archivos CSV en el directorio.")
-        gotoxy(10,23)
-        print("Puede pegar aquí la ruta completa de un .csv o presionar S para salir.")
+        gotoxy(22,23)
+        print("Puede pegar aquí la ruta completa de un .csv.")
         limpiar_buffer_entrada()
-        gotoxy(16,25)
-        print("Ingrese ruta completa del CSV (o escriba S para salir): ") 
+        gotoxy(30,25)
+        print("Ingrese ruta completa del CSV: ") 
         ruta = input().strip().strip('"')
         gotoxy(20,27)
         if ruta.lower() == 's' or ruta == '':
@@ -216,8 +216,8 @@ def seleccionarCSV():
         elif tecla == '0':
             limpiar_pantalla()
             limpiar_buffer_entrada()
-            gotoxy(0, 0)
-            print("\nIngrese la ruta completa del CSV (o escriba S para cancelar): ", end="", flush=True)
+            gotoxy(50, 0)
+            print("\nIngrese la ruta completa del CSV: ", end="", flush=True)
             ruta = input().strip().strip('"')
             if ruta.lower() == 's' or ruta == '':
                 limpiar_pantalla()
