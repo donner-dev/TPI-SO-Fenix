@@ -1,0 +1,4 @@
+Para ejecutar este programa debe abrirlo haciendo uso del acceso directo dentro de la carpeta "ejecutable"
+
+Consideración sobre los archivos CSV: 
+	Los datos cargados en cada archivo CSV deben tener este orden id_proceso, tamaño, t_arribo, t_irrupcion
