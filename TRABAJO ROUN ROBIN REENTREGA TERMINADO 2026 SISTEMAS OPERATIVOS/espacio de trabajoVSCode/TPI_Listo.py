@@ -988,20 +988,40 @@ def mostrarInforme(): #agustin
 
     limpiar_pantalla()
     #Sumatorias de tiempos para el informe final. (usar duraciones, no instantes)
+    # t_respuesta = tiempo entre arribo y primera vez que pasa a listos (primera respuesta)
+    # t_totalenColaListo = tiempo acumulado esperando turno en la cola de listos
     Sumatoria_TEspera = sum(p.get("t_respuesta", 0) for p in listaTerminados)
+    Sumatoria_TEsperaColaListos = sum(p.get("t_totalenColaListo", 0) for p in listaTerminados)
     Sumatoria_TRetorno = sum(p.get("total_retorno", p.get("t_finalizacion", 0)) for p in listaTerminados)
 
     gotoxy(1,1)
     console.print("[bold underline grey70]Informe estadístico[/bold underline grey70]")
-    Sumatoria_TEspera = Sumatoria_TEspera / len(listaTerminados)
+
+    # evitar división por cero si no hay procesos
+    if listaTerminados:
+        avg_respuesta = Sumatoria_TEspera / len(listaTerminados)
+        avg_colaListos = Sumatoria_TEsperaColaListos / len(listaTerminados)
+        avg_retorno = Sumatoria_TRetorno / len(listaTerminados)
+    else:
+        avg_respuesta = avg_colaListos = avg_retorno = 0
+
     gotoxy(1,2)
-    print("Tiempo de Espera promedio:", round(Sumatoria_TEspera, 2), "(ut)")
-    Sumatoria_TRetorno = Sumatoria_TRetorno / len(listaTerminados)
+    print("Tiempo de Espera (respuesta) promedio:", round(avg_respuesta, 2), "(ut)")
     gotoxy(1,3)
-    print("Tiempo de Retorno promedio:", round(Sumatoria_TRetorno, 2), "(ut)")
+    print("Tiempo en Cola de Espera por CPU promedio:", round(avg_colaListos, 2), "(ut)")
     gotoxy(1,4)
-    rendimientoSistema = len(listaTerminados) / T_Simulacion
+    print("Tiempo de Retorno promedio:", round(avg_retorno, 2), "(ut)")
+
+    gotoxy(1,5)
+    rendimientoSistema = len(listaTerminados) / T_Simulacion if T_Simulacion > 0 else 0
     print("Rendimiento del sistema:", round(rendimientoSistema, 3), "(procesos/ut)\n")#Saltar renglón
+
+    # debug: listar valores individuales para verificar cálculos manuales
+    #gotoxy(1,7)
+    #print("Detalles por proceso (id, t_respuesta, t_totalenColaListo)")
+    #for p in listaTerminados:
+    #    print(f" {p.get('id')}    {p.get('t_respuesta')}    {p.get('t_totalenColaListo')}")
+
     mostrarTerminados()
     #Saltar renglón
     print("\n")  
